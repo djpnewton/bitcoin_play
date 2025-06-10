@@ -1,6 +1,6 @@
 import 'utils.dart';
 import 'mnemonic.dart';
-import 'extended_keys.dart';
+import 'keys.dart';
 
 void main() async {
   final bytes = randomBits(128);
@@ -23,4 +23,26 @@ void main() async {
   print('  Private Key: ${bytesToHex(masterKey.privateKey)}');
   print('  Public Key:  ${bytesToHex(masterKey.publicKey)}');
   print('  Chain Code:  ${bytesToHex(masterKey.chainCode)}');
+
+  final childKey = childKeyFromMasterKey(masterKey, 2147483647, hardened: true);
+  if (childKey != null) {
+    print('Child Extended Key:');
+    print('  Private Key: ${bytesToHex(childKey.privateKey)}');
+    print('  Public Key:  ${bytesToHex(childKey.publicKey)}');
+    print('  Chain Code:  ${bytesToHex(childKey.chainCode)}');
+  } else {
+    print('Failed to derive child key.');
+  }
+
+  final childPubKey = childKeyFromMasterPublicKey(masterKey, 0);
+  if (childPubKey != null) {
+    print('Child Public Key:');
+    print('  Public Key:  ${bytesToHex(childPubKey.publicKey)}');
+    print('  Chain Code:  ${bytesToHex(childPubKey.chainCode)}');
+  } else {
+    print('Failed to derive child public key.');
+  }
+
+  //final address = addressFromPublicKey(masterKey.publicKey);
+  //print('Bitcoin Address: $address');
 }

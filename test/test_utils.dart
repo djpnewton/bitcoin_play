@@ -33,4 +33,14 @@ void main() {
     var bytes = bigIntToBytes(value);
     expect(bytes, equals(Uint8List.fromList([0x01, 0x02, 0x03, 0x04])));
   });
+  test('listEquals() compares two lists for equality', () {
+    var list1 = [1, 2, 3];
+    var list2 = [1, 2, 3];
+    var list3 = [4, 5, 6];
+    expect(listEquals(list1, list2), isTrue);
+    expect(listEquals(list1, list3), isFalse);
+    expect(listEquals(null, null), isTrue);
+    expect(listEquals(null, list1), isFalse);
+    expect(listEquals(list1, null), isFalse);
+  });
 }

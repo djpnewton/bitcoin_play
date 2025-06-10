@@ -20,8 +20,7 @@ void main() {
   });
   test('create mnemonic from too small entropy', () async {
     final smallEntropy = randomBits(64);
-    final mnemonic = mnemonicFromEntropy(smallEntropy);
-    expect(mnemonic.isEmpty, isTrue);
+    expect(() => mnemonicFromEntropy(smallEntropy), throwsFormatException);
   });
   test('create mnemonic from large entropy', () async {
     final largeEntropy = randomBits(256);
@@ -32,8 +31,11 @@ void main() {
   });
   test('create mnemonic from too large entropy', () async {
     final largeEntropy = randomBits(512);
-    final mnemonic = mnemonicFromEntropy(largeEntropy);
-    expect(mnemonic.isEmpty, isTrue);
+    expect(() => mnemonicFromEntropy(largeEntropy), throwsFormatException);
+  });
+  test('create mnemonic from invalid entropy length', () async {
+    final entropy = randomBits(264);
+    expect(() => mnemonicFromEntropy(entropy), throwsFormatException);
   });
   test('mnemonic valid', () async {
     final mnemonic = mnemonicFromEntropy(entropy);
