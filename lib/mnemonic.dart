@@ -82,10 +82,10 @@ bool mnemonicValid(String mnemonic) {
 
 String mnemonicFromEntropy(Uint8List entropy) {
   if (entropy.length < 16 || entropy.length > 32) {
-    throw FormatException('invalid entropy length');
+    throw ArgumentError('invalid entropy length');
   }
   if (entropy.length % 4 != 0) {
-    throw FormatException('entropy length must be a multiple of 4');
+    throw ArgumentError('entropy length must be a multiple of 4');
   }
   var bigint = bytesToBigInt(entropy);
 

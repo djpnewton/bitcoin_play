@@ -1,16 +1,12 @@
+import 'dart:typed_data';
+
 import 'utils.dart';
 import 'mnemonic.dart';
 import 'keys.dart';
 
 void main() async {
-  final bytes = randomBits(128);
-  final bigint = bytesToBigInt(bytes);
-  final bytesFromBigInt = bigIntToBytes(bigint);
-  print('Random 128-bit number (hex): ${bytesToHex(bytes)}');
-  print('As big int: $bigint');
-  print('Converted back to bytes:     ${bytesToHex(bytesFromBigInt)}');
-
-  final mnemonic = mnemonicFromEntropy(bytes);
+  final mnemonic =
+      'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
   print('Mnemonic words: ${mnemonic}');
 
   print('Validating mnemonic: ${mnemonicValid(mnemonic)}');
@@ -18,31 +14,63 @@ void main() async {
   final seed = await mnemonicToSeed(mnemonic);
   print('Seed (hex): $seed');
 
-  final masterKey = masterKeyFromSeed(hexToBytes(seed));
+  final masterKey = PrivateKey.fromSeed(hexToBytes(seed));
   print('Master Extended Key:');
   print('  Private Key: ${bytesToHex(masterKey.privateKey)}');
   print('  Public Key:  ${bytesToHex(masterKey.publicKey)}');
   print('  Chain Code:  ${bytesToHex(masterKey.chainCode)}');
 
-  final childKey = childKeyFromMasterKey(masterKey, 2147483647, hardened: true);
-  if (childKey != null) {
-    print('Child Extended Key:');
-    print('  Private Key: ${bytesToHex(childKey.privateKey)}');
-    print('  Public Key:  ${bytesToHex(childKey.publicKey)}');
-    print('  Chain Code:  ${bytesToHex(childKey.chainCode)}');
-  } else {
-    print('Failed to derive child key.');
-  }
+  final childKey = masterKey.childPrivateKey(0x80000000, hardened: true);
+  print('Child Extended Key m/0\':');
+  print('  Private Key:  ${bytesToHex(childKey.privateKey)}');
+  print('  Public Key:   ${bytesToHex(childKey.publicKey)}');
+  print('  Chain Code:   ${bytesToHex(childKey.chainCode)}');
+  print('  Depth:        ${intToHex(childKey.depth)}');
+  print('  Parent Fingerprint: ${intToHex(childKey.parentFingerprint)}');
+  print('  Child Number: ${intToHex(childKey.childNumber)}');
+  final xpriv = childKey.xpriv(Network.mainnet, ScriptType.P2PKH);
+  print('  xpriv: $xpriv');
+  final childKeyParsed = PrivateKey.fromXpriv(xpriv);
+  print('Parsed Child Extended Key:');
+  print('  Private Key:  ${bytesToHex(childKeyParsed.privateKey)}');
+  print('  Public Key:   ${bytesToHex(childKeyParsed.publicKey)}');
+  print('  Chain Code:   ${bytesToHex(childKeyParsed.chainCode)}');
+  print('  Depth:        ${intToHex(childKeyParsed.depth)}');
+  print('  Parent Fingerprint: ${intToHex(childKeyParsed.parentFingerprint)}');
+  print('  Child Number: ${intToHex(childKeyParsed.childNumber)}');
 
-  final childPubKey = childKeyFromMasterPublicKey(masterKey, 0);
-  if (childPubKey != null) {
-    print('Child Public Key:');
-    print('  Public Key:  ${bytesToHex(childPubKey.publicKey)}');
-    print('  Chain Code:  ${bytesToHex(childPubKey.chainCode)}');
-  } else {
-    print('Failed to derive child public key.');
-  }
+  final childPubKey = masterKey.childPublicKey(1);
+  print('Child Public Key m/1:');
+  print('  Public Key:   ${bytesToHex(childPubKey.publicKey)}');
+  print('  Chain Code:   ${bytesToHex(childPubKey.chainCode)}');
+  print('  Depth:        ${intToHex(childPubKey.depth)}');
+  print('  Parent Fingerprint: ${intToHex(childPubKey.parentFingerprint)}');
+  print('  Child Number: ${intToHex(childPubKey.childNumber)}');
+  final xpub = childPubKey.xpub(Network.mainnet, ScriptType.P2PKH);
+  print('  xpub:  $xpub');
+  final childPubKeyParsed = PublicKey.fromXPub(xpub);
+  print('Parsed Child Public Key:');
+  print('  Public Key:   ${bytesToHex(childPubKeyParsed.publicKey)}');
+  print('  Chain Code:   ${bytesToHex(childPubKeyParsed.chainCode)}');
+  print('  Depth:        ${intToHex(childPubKeyParsed.depth)}');
+  print(
+    '  Parent Fingerprint: ${intToHex(childPubKeyParsed.parentFingerprint)}',
+  );
+  print('  Child Number: ${intToHex(childPubKeyParsed.childNumber)}');
+}
 
-  //final address = addressFromPublicKey(masterKey.publicKey);
-  //print('Bitcoin Address: $address');
+Uint8List intToBytes(int value) {
+  if (value < 0) {
+    throw ArgumentError('Value must be non-negative');
+  }
+  final byteList = <int>[];
+  while (value > 0) {
+    byteList.add(value & 0xFF);
+    value >>= 8;
+  }
+  return Uint8List.fromList(byteList.reversed.toList());
+}
+
+String intToHex(int value) {
+  return bytesToHex(intToBytes(value));
 }

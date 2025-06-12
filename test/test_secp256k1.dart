@@ -16,6 +16,36 @@ void main() {
         equals(BigInt.parse(
             '0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8')));
   });
+  test('point from x odd', () {
+    var p = Secp256k1Point.fromX(
+      BigInt.parse(
+          '95756321671391691422499260635489713855017934320697232784419034040341620768463'),
+      YParity.Odd,
+    );
+    expect(
+        p.x,
+        equals(BigInt.parse(
+            '95756321671391691422499260635489713855017934320697232784419034040341620768463')));
+    expect(
+        p.y,
+        equals(BigInt.parse(
+            '31082383852715566401144521158100549802439663929750477091548749113466916359503')));
+  });
+  test('point from x even', () {
+    var p = Secp256k1Point.fromX(
+      BigInt.parse(
+          '89096489680060348378492666920240512821676435969427706206739370292263503437348'),
+      YParity.Even,
+    );
+    expect(
+        p.x,
+        equals(BigInt.parse(
+            '89096489680060348378492666920240512821676435969427706206739370292263503437348')));
+    expect(
+        p.y,
+        equals(BigInt.parse(
+            '114443720505429237542671734873075584269201314367402518484868187858578812995486')));
+  });
   test('double', () {
     var p1 = Secp256k1Point(
       BigInt.parse(

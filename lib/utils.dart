@@ -1,13 +1,17 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart' as crypto;
+import 'package:hashlib/hashlib.dart' as hashlib;
+
 String bytesToHex(Uint8List bytes) {
   BigInt value = bytesToBigInt(bytes);
   return value.toRadixString(16).padLeft(bytes.length * 2, '0');
 }
 
 Uint8List hexToBytes(String hex) {
-  assert(hex.length % 2 == 0, 'Hex string must have an even length');
+  if (hex.length % 2 != 0)
+    throw ArgumentError('Hex string must have an even length');
   // remove any leading '0x' if present
   if (hex.startsWith('0x')) {
     hex = hex.substring(2);
@@ -66,4 +70,21 @@ bool listEquals<T>(List<T>? a, List<T>? b) {
     }
   }
   return true;
+}
+
+/// compute the hash256 (ie SHA-256(SHA-256(data))) of the input data
+Uint8List hash256(Uint8List data) {
+  final sha256 = crypto.sha256;
+  final firstHash = sha256.convert(data);
+  final secondHash = sha256.convert(firstHash.bytes);
+  return Uint8List.fromList(secondHash.bytes);
+}
+
+/// compute the hash160 (ie RIPEMD-160(SHA-256(data))) of the input data
+Uint8List hash160(Uint8List data) {
+  final sha256 = crypto.sha256;
+  final firstHash = sha256.convert(data);
+  final ripemd160 = hashlib.ripemd160;
+  final secondHash = ripemd160.convert(firstHash.bytes);
+  return Uint8List.fromList(secondHash.bytes);
 }

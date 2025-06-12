@@ -1,3 +1,8 @@
+enum YParity {
+  Odd,
+  Even,
+}
+
 class Secp256k1Point {
   // secp256k1 curve y² = x³ + ax + b
   final BigInt x;
@@ -17,6 +22,28 @@ class Secp256k1Point {
   );
 
   Secp256k1Point(this.x, this.y);
+
+  factory Secp256k1Point.fromX(BigInt x, YParity yParity) {
+    // Calculate y² = x³ + ax + b
+    // well a is 0 so we can simplify this to y² = x³ + b
+    final ySquared = (x.modPow(BigInt.from(3), p) + b) % p;
+
+    // in Secp256k1 is the square root of y is y^((p + 1) / 4)
+    final pPlusOne = p + BigInt.from(1);
+    var y = ySquared.modPow(pPlusOne ~/ BigInt.from(4), p);
+
+    // check y
+    assert(y.modPow(BigInt.from(2), p) == ySquared);
+
+    // select the correct value for y
+    if (yParity == YParity.Even && y % BigInt.two != BigInt.zero) {
+      y = (p - y) % p;
+    }
+    if (yParity == YParity.Odd && y % BigInt.two == BigInt.zero) {
+      y = (p - y) % p;
+    }
+    return Secp256k1Point(x, y);
+  }
 
   Secp256k1Point double() {
     // slope = (3x² + a) / 2y
