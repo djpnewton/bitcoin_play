@@ -1,7 +1,4 @@
-enum YParity {
-  Odd,
-  Even,
-}
+enum YParity { Odd, Even }
 
 class Secp256k1Point {
   // secp256k1 curve y² = x³ + ax + b
@@ -11,14 +8,18 @@ class Secp256k1Point {
   static final BigInt a = BigInt.zero; // a = 0 for secp256k1
   static final BigInt b = BigInt.from(7); // b = 7 for secp256k1
   static final BigInt p = BigInt.parse(
-      '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F'); // prime modulus for secp256k1
+    '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F',
+  ); // prime modulus for secp256k1
   static final BigInt n = BigInt.parse(
-      '0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141'); // order of the curve
+    '0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141',
+  ); // order of the curve
   static final Secp256k1Point generator = Secp256k1Point(
     BigInt.parse(
-        '0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798'),
+      '0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798',
+    ),
     BigInt.parse(
-        '0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8'),
+      '0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8',
+    ),
   );
 
   Secp256k1Point(this.x, this.y);

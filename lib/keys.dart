@@ -172,19 +172,20 @@ class PublicKey {
     // Return the public key in xpub format
     final prefix = switch (network) {
       Network.mainnet => switch (scriptType) {
-          ScriptType.P2PKH => _prefixDict['xpub']!,
-          ScriptType.P2SH_P2WPKH => _prefixDict['ypub']!,
-          ScriptType.P2WPKH => _prefixDict['zpub']!,
-        },
+        ScriptType.P2PKH => _prefixDict['xpub']!,
+        ScriptType.P2SH_P2WPKH => _prefixDict['ypub']!,
+        ScriptType.P2WPKH => _prefixDict['zpub']!,
+      },
       Network.testnet => switch (scriptType) {
-          ScriptType.P2PKH => _prefixDict['tpub']!,
-          ScriptType.P2SH_P2WPKH => _prefixDict['upub']!,
-          ScriptType.P2WPKH => _prefixDict['vpub']!,
-        },
+        ScriptType.P2PKH => _prefixDict['tpub']!,
+        ScriptType.P2SH_P2WPKH => _prefixDict['upub']!,
+        ScriptType.P2WPKH => _prefixDict['vpub']!,
+      },
     };
     final depthHex = depth.toRadixString(16).padLeft(2, '0');
-    final parentFingerprintHex =
-        parentFingerprint.toRadixString(16).padLeft(8, '0');
+    final parentFingerprintHex = parentFingerprint
+        .toRadixString(16)
+        .padLeft(8, '0');
     final childNumberHex = childNumber.toRadixString(16).padLeft(8, '0');
     final chainCodeHex = bytesToHex(chainCode);
     final keyHex = bytesToHex(publicKey);
@@ -316,7 +317,7 @@ class PrivateKey extends PublicKey {
     // calculate the child private key
     final childPrivateKeyInt =
         (bytesToBigInt(privateKeyInput) + bytesToBigInt(privateKey)) %
-            Secp256k1Point.n;
+        Secp256k1Point.n;
     final childPrivateKey = bigIntToBytes(childPrivateKeyInt);
     // The public key is derived from the private key using secp256k1
     final childPublicKey = _pubkeyFromPrivateKey(childPrivateKey);
@@ -334,19 +335,20 @@ class PrivateKey extends PublicKey {
     // Return the private key in xpriv format
     final prefix = switch (network) {
       Network.mainnet => switch (scriptType) {
-          ScriptType.P2PKH => _prefixDict['xprv']!,
-          ScriptType.P2SH_P2WPKH => _prefixDict['yprv']!,
-          ScriptType.P2WPKH => _prefixDict['zprv']!,
-        },
+        ScriptType.P2PKH => _prefixDict['xprv']!,
+        ScriptType.P2SH_P2WPKH => _prefixDict['yprv']!,
+        ScriptType.P2WPKH => _prefixDict['zprv']!,
+      },
       Network.testnet => switch (scriptType) {
-          ScriptType.P2PKH => _prefixDict['tprv']!,
-          ScriptType.P2SH_P2WPKH => _prefixDict['uprv']!,
-          ScriptType.P2WPKH => _prefixDict['vprv']!,
-        },
+        ScriptType.P2PKH => _prefixDict['tprv']!,
+        ScriptType.P2SH_P2WPKH => _prefixDict['uprv']!,
+        ScriptType.P2WPKH => _prefixDict['vprv']!,
+      },
     };
     final depthHex = depth.toRadixString(16).padLeft(2, '0');
-    final parentFingerprintHex =
-        parentFingerprint.toRadixString(16).padLeft(8, '0');
+    final parentFingerprintHex = parentFingerprint
+        .toRadixString(16)
+        .padLeft(8, '0');
     final childNumberHex = childNumber.toRadixString(16).padLeft(8, '0');
     final chainCodeHex = bytesToHex(chainCode);
     final keyHex = '00' + bytesToHex(privateKey);

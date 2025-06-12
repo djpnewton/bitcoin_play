@@ -33,7 +33,8 @@ String base58Encode(Uint8List input) {
 Uint8List base58Decode(String input) {
   var value = BigInt.zero;
   var count = 0;
-  // reverse the input string to process from least significant to most significant
+  // reverse the input string to process from least significant to most
+  // significant
   for (var i = input.length - 1; i >= 0; i--) {
     final char = input[i];
     // find the index (value) of the character in the alphabet
@@ -51,14 +52,16 @@ Uint8List base58Decode(String input) {
   for (var i = 0; i < input.length && input[i] == '1'; i++) {
     countLeadingOnes++;
   }
-  return Uint8List.fromList(List.filled(countLeadingOnes, 0) +
-      bigIntToBytes(value)); // prepend leading zeros based on countLeadingOnes
+  return Uint8List.fromList(
+    List.filled(countLeadingOnes, 0) + bigIntToBytes(value),
+  ); // prepend leading zeros based on countLeadingOnes
 }
 
 String base58EncodeCheck(Uint8List input) {
   // calculate the checksum using SHA-256 twice
-  final checksum =
-      crypto.sha256.convert(crypto.sha256.convert(input).bytes).bytes;
+  final checksum = crypto.sha256
+      .convert(crypto.sha256.convert(input).bytes)
+      .bytes;
   // take the first 4 bytes of the checksum
   final checksumBytes = Uint8List.fromList(checksum.sublist(0, 4));
   // concatenate the input with the checksum and base58 encode the result

@@ -12,7 +12,10 @@ Future<String> mnemonicToSeed(String mnemonic, {String passphrase = ''}) async {
 
   // use pbkdf2 to generate a seed from the mnemonic
   final pbkdf2 = cryptography.Pbkdf2(
-      bits: 512, iterations: 2048, macAlgorithm: cryptography.Hmac.sha512());
+    bits: 512,
+    iterations: 2048,
+    macAlgorithm: cryptography.Hmac.sha512(),
+  );
   final salt = 'mnemonic$passphrase';
   // Convert the mnemonic to bytes
   final mnemonicBytes = utf8.encode(mnemonic);
