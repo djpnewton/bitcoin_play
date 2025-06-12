@@ -6,16 +6,12 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'secp256k1.dart';
 import 'utils.dart';
 import 'base58.dart';
+import 'common.dart';
 
 enum ScriptType {
   P2PKH, // 'Pay to Public Key Hash'
   P2SH_P2WPKH, // 'Pay to Witness Public Key Hash' wrapped in 'Pay to Script Hash'
   P2WPKH, // 'Pay to Witness Public Key Hash'
-}
-
-enum Network {
-  mainnet, // Main Bitcoin network
-  testnet, // Bitcoin test network
 }
 
 const _prefixDict = {
@@ -458,16 +454,15 @@ class PrivateKey extends PublicKey {
       );
     }
     // Create a new key from the master key and the index
-    final data =
-        hardened
-            ? hexToBytes(
-              '00' +
-                  bytesToHex(privateKey) +
-                  index.toRadixString(16).padLeft(8, '0'),
-            ) // '00' + master privkey + 4 byte index
-            : hexToBytes(
-              bytesToHex(publicKey) + index.toRadixString(16).padLeft(8, '0'),
-            ); // master pubkey + 4 byte index
+    final data = hardened
+        ? hexToBytes(
+            '00' +
+                bytesToHex(privateKey) +
+                index.toRadixString(16).padLeft(8, '0'),
+          ) // '00' + master privkey + 4 byte index
+        : hexToBytes(
+            bytesToHex(publicKey) + index.toRadixString(16).padLeft(8, '0'),
+          ); // master pubkey + 4 byte index
     final hmac = crypto.Hmac(crypto.sha512, chainCode);
     final digest = hmac.convert(data);
     // The first 32 bytes are the child private key input, the next 32 bytes are the chain code
@@ -530,7 +525,7 @@ class PrivateKey extends PublicKey {
     // Use the default network and script type if not provided
     network ??= defaultNetwork;
     scriptType ??= defaultScriptType;
-    // Return the private key in xpriv format
+    // Return the private key in xprv format
     final prefix = switch (network) {
       Network.mainnet => switch (scriptType) {
         ScriptType.P2PKH => _prefixDict['xprv']!,

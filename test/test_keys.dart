@@ -5,6 +5,8 @@ import 'package:test/test.dart';
 
 import '../lib/keys.dart';
 import '../lib/utils.dart';
+import '../lib/common.dart';
+import '../lib/wif.dart';
 
 void main() {
   late Uint8List seed;
@@ -637,9 +639,116 @@ void main() {
     );
   });
   test('bip49 test vectors', () {
+    expect(
+      masterKey.xprv(
+        network: Network.testnet,
+        scriptType: ScriptType.P2SH_P2WPKH,
+      ),
+      equals(
+        'uprv8tXDerPXZ1QsVNjUJWTurs9kA1KGfKUAts74GCkcXtU8GwnH33GDRbNJpEqTvipfCyycARtQJhmdfWf8oKt41X9LL1zeD2pLsWmxEk3VAwd',
+      ),
+    );
+    // Account 0, root = m/49'/1'/0'
+    var childKey = masterKey.childFromDerivationPath('m/49h/1h/0h');
+    expect(
+      childKey.xprv(
+        network: Network.testnet,
+        scriptType: ScriptType.P2SH_P2WPKH,
+      ),
+      equals(
+        'uprv91G7gZkzehuMVxDJTYE6tLivdF8e4rvzSu1LFfKw3b2Qx1Aj8vpoFnHdfUZ3hmi9jsvPifmZ24RTN2KhwB8BfMLTVqaBReibyaFFcTP1s9n',
+      ),
+    );
+    expect(
+      childKey.xpub(
+        network: Network.testnet,
+        scriptType: ScriptType.P2SH_P2WPKH,
+      ),
+      equals(
+        'upub5EFU65HtV5TeiSHmZZm7FUffBGy8UKeqp7vw43jYbvZPpoVsgU93oac7Wk3u6moKegAEWtGNF8DehrnHtv21XXEMYRUocHqguyjknFHYfgY',
+      ),
+    );
+    // Account 0, first receiving private key = m/49'/1'/0'/0/0
+    childKey = masterKey.childFromDerivationPath('m/49h/1h/0h/0/0');
+    var wif = Wif(Network.testnet, childKey.privateKey, true);
+    expect(
+      wif.toWifString(),
+      equals('cULrpoZGXiuC19Uhvykx7NugygA3k86b3hmdCeyvHYQZSxojGyXJ'),
+    );
+    expect(
+      childKey.privateKey,
+      equals(
+        hexToBytes(
+          '0xc9bdb49cfbaedca21c4b1f3a7803c34636b1d7dc55a717132443fc3f4c5867e8',
+        ),
+      ),
+    );
+    expect(
+      childKey.publicKey,
+      equals(
+        hexToBytes(
+          '0x03a1af804ac108a8a51782198c2d034b28bf90c8803f5a53f76276fa69a4eae77f',
+        ),
+      ),
+    );
+
     //TODO
+
+    /*
+      // Address derivation
+      keyhash = HASH160(account0recvPublicKeyHex) = 0x38971f73930f6c141d977ac4fd4a727c854935b3
+      scriptSig = <0 <keyhash>> = 0x001438971f73930f6c141d977ac4fd4a727c854935b3
+      addressBytes = HASH160(scriptSig) = 0x336caa13e08b96080a32b5d818d59b4ab3b36742
+
+      // addressBytes base58check encoded for testnet
+      address = base58check(prefix | addressBytes) = 2Mww8dCYPUpKHofjgcXcBCEGmniw9CoaiD2 (testnet)
+    */
   });
   test('bip84 test vectors', () {
+    expect(
+      masterKey.xprv(scriptType: ScriptType.P2WPKH),
+      equals(
+        'zprvAWgYBBk7JR8Gjrh4UJQ2uJdG1r3WNRRfURiABBE3RvMXYSrRJL62XuezvGdPvG6GFBZduosCc1YP5wixPox7zhZLfiUm8aunE96BBa4Kei5',
+      ),
+    );
+    expect(
+      masterKey.xpub(scriptType: ScriptType.P2WPKH),
+      equals(
+        'zpub6jftahH18ngZxLmXaKw3GSZzZsszmt9WqedkyZdezFtWRFBZqsQH5hyUmb4pCEeZGmVfQuP5bedXTB8is6fTv19U1GQRyQUKQGUTzyHACMF',
+      ),
+    );
+    // Account 0, root = m/84'/0'/0'
+    var childKey = masterKey.childFromDerivationPath('m/84h/0h/0h');
+    expect(
+      childKey.xprv(scriptType: ScriptType.P2WPKH),
+      equals(
+        'zprvAdG4iTXWBoARxkkzNpNh8r6Qag3irQB8PzEMkAFeTRXxHpbF9z4QgEvBRmfvqWvGp42t42nvgGpNgYSJA9iefm1yYNZKEm7z6qUWCroSQnE',
+      ),
+    );
+    expect(
+      childKey.xpub(scriptType: ScriptType.P2WPKH),
+      equals(
+        'zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs',
+      ),
+    );
+
     //TODO
+
+    /*
+    // Account 0, first receiving address = m/84'/0'/0'/0/0
+    privkey = KyZpNDKnfs94vbrwhJneDi77V6jF64PWPF8x5cdJb8ifgg2DUc9d
+    pubkey  = 0330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c
+    address = bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu
+
+    // Account 0, second receiving address = m/84'/0'/0'/0/1
+    privkey = Kxpf5b8p3qX56DKEe5NqWbNUP9MnqoRFzZwHRtsFqhzuvUJsYZCy
+    pubkey  = 03e775fd51f0dfb8cd865d9ff1cca2a158cf651fe997fdc9fee9c1d3b5e995ea77
+    address = bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g
+
+    // Account 0, first change address = m/84'/0'/0'/1/0
+    privkey = KxuoxufJL5csa1Wieb2kp29VNdn92Us8CoaUG3aGtPtcF3AzeXvF
+    pubkey  = 03025324888e429ab8e3dbaf1f7802648b9cd01e9b418485c5fa4c1b9b5700e1a6
+    address = bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el
+  */
   });
 }

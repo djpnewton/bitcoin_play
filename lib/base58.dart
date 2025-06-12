@@ -59,9 +59,7 @@ Uint8List base58Decode(String input) {
 
 String base58EncodeCheck(Uint8List input) {
   // calculate the checksum using SHA-256 twice
-  final checksum = crypto.sha256
-      .convert(crypto.sha256.convert(input).bytes)
-      .bytes;
+  final checksum = hash256(input);
   // take the first 4 bytes of the checksum
   final checksumBytes = Uint8List.fromList(checksum.sublist(0, 4));
   // concatenate the input with the checksum and base58 encode the result
