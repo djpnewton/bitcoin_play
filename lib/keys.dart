@@ -42,6 +42,71 @@ const _prefixDict = {
   'Vpub': '02575483', // Testnet - Multi-signature P2WSH
 };
 
+Network networkFromPrefix(String prefix) {
+  // Convert the prefix to Network
+  return switch (prefix) {
+    'xprv' => Network.mainnet,
+    'yprv' => Network.mainnet,
+    'zprv' => Network.mainnet,
+    'Yprv' => Network.mainnet,
+    'Zprv' => Network.mainnet,
+    'tprv' => Network.testnet,
+    'uprv' => Network.testnet,
+    'vprv' => Network.testnet,
+    'Uprv' => Network.testnet,
+    'Vprv' => Network.testnet,
+
+    'xpub' => Network.mainnet,
+    'ypub' => Network.mainnet,
+    'zpub' => Network.mainnet,
+    'Ypub' => Network.mainnet,
+    'Zpub' => Network.mainnet,
+    'tpub' => Network.testnet,
+    'upub' => Network.testnet,
+    'vpub' => Network.testnet,
+    'Upub' => Network.testnet,
+    'Vpub' => Network.testnet,
+    _ => throw ArgumentError('Unknown prefix: $prefix'),
+  };
+}
+
+ScriptType scriptTypeFromPrefix(String prefix) {
+  // Convert the prefix to ScriptType
+  return switch (prefix) {
+    'xprv' => ScriptType.P2PKH,
+    'yprv' => ScriptType.P2SH_P2WPKH,
+    'zprv' => ScriptType.P2WPKH,
+    'tprv' => ScriptType.P2PKH,
+    'uprv' => ScriptType.P2SH_P2WPKH,
+    'vprv' => ScriptType.P2WPKH,
+
+    'xpub' => ScriptType.P2PKH,
+    'ypub' => ScriptType.P2SH_P2WPKH,
+    'zpub' => ScriptType.P2WPKH,
+    'tpub' => ScriptType.P2PKH,
+    'upub' => ScriptType.P2SH_P2WPKH,
+    'vpub' => ScriptType.P2WPKH,
+    _ => throw ArgumentError('Unknown prefix: $prefix'),
+  };
+}
+
+YParity? pubkeyPrefixToYParity(int prefix) {
+  // Convert the public key prefix to YParity
+  return switch (prefix) {
+    0x02 => YParity.Even, // Compressed public key with even y-coordinate
+    0x03 => YParity.Odd, // Compressed public key with odd y-coordinate
+    _ => null, // Invalid prefix
+  };
+}
+
+String yParityToPubkeyPrefix(YParity yParity) {
+  // Convert YParity to public key prefix
+  return switch (yParity) {
+    YParity.Even => '02', // Compressed public key with even y-coordinate
+    YParity.Odd => '03', // Compressed public key with odd y-coordinate
+  };
+}
+
 class PublicKey {
   int depth; // Depth in the key hierarchy, 0 for master key
   int parentFingerprint; // Fingerprint of the parent key, 0 for master key
@@ -49,13 +114,19 @@ class PublicKey {
   // The public key and chain code
   Uint8List publicKey;
   Uint8List chainCode;
+
+  Network defaultNetwork;
+  ScriptType defaultScriptType;
+
   PublicKey(
     this.depth,
     this.parentFingerprint,
     this.childNumber,
     this.publicKey,
-    this.chainCode,
-  );
+    this.chainCode, {
+    this.defaultNetwork = Network.mainnet,
+    this.defaultScriptType = ScriptType.P2PKH,
+  });
 
   factory PublicKey.fromXPub(String xpub) {
     // Parse the xpub string and return a PublicKey object
@@ -63,6 +134,14 @@ class PublicKey {
     if (bytes.length != 82) {
       throw FormatException('Invalid length: ${bytes.length}');
     }
+    // check the prefix is for a public key
+    final prefix = xpub.substring(0, 4);
+    if (!prefix.endsWith('pub')) {
+      throw ArgumentError('Invalid prefix: $prefix');
+    }
+    // set the default network and script type based on the prefix
+    final network = networkFromPrefix(prefix);
+    final scriptType = scriptTypeFromPrefix(prefix);
     // check checksum
     final checksum = bytes.sublist(78, 82);
     final calculatedChecksum = hash256(bytes.sublist(0, 78)).sublist(0, 4);
@@ -70,16 +149,14 @@ class PublicKey {
       throw FormatException('Invalid checksum');
     }
     // Extract the fields from the bytes
-    final prefix = bytes.sublist(0, 4);
     final depth = bytes[4];
     final parentFingerprint = bytesToBigInt(bytes.sublist(5, 9)).toInt();
     final childNumber = bytesToBigInt(bytes.sublist(9, 13)).toInt();
     final chainCode = bytes.sublist(13, 45);
     final publicKey = bytes.sublist(45, 78);
     // Validate the prefix
-    final prefixHex = bytesToHex(prefix);
-    if (!_prefixDict.containsValue(prefixHex)) {
-      throw FormatException('Invalid prefix: $prefixHex');
+    if (!_prefixDict.containsKey(prefix)) {
+      throw FormatException('Prefix not found: $prefix');
     }
     // validate the parent fingerprint
     if (depth == 0 && parentFingerprint != 0) {
@@ -91,9 +168,25 @@ class PublicKey {
     }
     // validate the public key prefix
     final pubkeyPrefix = publicKey[0];
-    if (pubkeyPrefix != 0x02 && pubkeyPrefix != 0x03) {
+    final yParity = pubkeyPrefixToYParity(pubkeyPrefix);
+    if (yParity == null) {
       throw FormatException(
         'Invalid public key prefix: ${pubkeyPrefix.toRadixString(16).padLeft(2, '0')}',
+      );
+    }
+    // validate the public key value
+    final publicKeyX = bytesToBigInt(publicKey.sublist(1));
+    if (publicKeyX <= BigInt.zero || publicKeyX >= Secp256k1Point.n) {
+      throw FormatException(
+        'Invalid public key value: ${bytesToHex(publicKey)}',
+      );
+    }
+    // check we can derive the point from the x coordinate
+    try {
+      Secp256k1Point.fromX(publicKeyX, yParity);
+    } catch (e) {
+      throw FormatException(
+        'Invalid public key value: ${bytesToHex(publicKey)}',
       );
     }
     return PublicKey(
@@ -102,6 +195,8 @@ class PublicKey {
       childNumber,
       publicKey,
       chainCode,
+      defaultNetwork: network,
+      defaultScriptType: scriptType,
     );
   }
 
@@ -117,13 +212,17 @@ class PublicKey {
     if (publicKey.length != 33) {
       throw ArgumentError('Compressed public key must be 33 bytes long');
     }
-    // Remove the prefix (0x02 or 0x03)
+    // get Y parity from the first byte
+    final yParity = pubkeyPrefixToYParity(publicKey[0]);
+    if (yParity == null) {
+      throw ArgumentError(
+        'Invalid public key prefix: ${publicKey[0].toRadixString(16).padLeft(2, '0')}',
+      );
+    }
+    // extract x coordinate from the public key
     final hex = bytesToHex(publicKey.sublist(1));
     final x = BigInt.parse(hex, radix: 16);
-    return Secp256k1Point.fromX(
-      x,
-      publicKey[0] == 0x03 ? YParity.Odd : YParity.Even,
-    ); // 0x02 means y is even, 0x03 means y is odd
+    return Secp256k1Point.fromX(x, yParity);
   }
 
   int fingerprint() {
@@ -153,7 +252,9 @@ class PublicKey {
       publicKeyInput,
     ).add(_compressedPublicKeyToPoint(publicKey));
     // compressed public key prefix: 0x02 or 0x03
-    final prefix = childPublicKeyPoint.y.isEven ? '02' : '03';
+    final prefix = yParityToPubkeyPrefix(
+      childPublicKeyPoint.y.isEven ? YParity.Even : YParity.Odd,
+    );
     final childPublicKey = Uint8List.fromList(
       hexToBytes(
         prefix + childPublicKeyPoint.x.toRadixString(16).padLeft(64, '0'),
@@ -168,7 +269,10 @@ class PublicKey {
     );
   }
 
-  String xpub(Network network, ScriptType scriptType) {
+  String xpub({Network? network, ScriptType? scriptType}) {
+    // Use the default network and script type if not provided
+    network ??= defaultNetwork;
+    scriptType ??= defaultScriptType;
     // Return the public key in xpub format
     final prefix = switch (network) {
       Network.mainnet => switch (scriptType) {
@@ -209,8 +313,18 @@ class PrivateKey extends PublicKey {
     int childNumber,
     Uint8List publicKey,
     Uint8List chainCode,
-    this.privateKey,
-  ) : super(depth, parentFingerprint, childNumber, publicKey, chainCode);
+    this.privateKey, {
+    Network defaultNetwork = Network.mainnet,
+    ScriptType defaultScriptType = ScriptType.P2PKH,
+  }) : super(
+         depth,
+         parentFingerprint,
+         childNumber,
+         publicKey,
+         chainCode,
+         defaultNetwork: defaultNetwork,
+         defaultScriptType: defaultScriptType,
+       );
 
   static Uint8List _pubkeyFromPrivateKey(Uint8List privateKey) {
     // Derive the public key from the private key using secp256k1
@@ -218,12 +332,18 @@ class PrivateKey extends PublicKey {
     // Convert the point to bytes (compressed format)
     final x = point.x.toRadixString(16).padLeft(64, '0');
     // Compressed public key format: 0x02 or 0x03 + x
-    final prefix = (point.y.isEven ? '02' : '03');
+    final prefix = yParityToPubkeyPrefix(
+      point.y.isEven ? YParity.Even : YParity.Odd,
+    );
     return Uint8List.fromList(hexToBytes(prefix + x));
   }
 
   /// Derive the master key from the seed
-  factory PrivateKey.fromSeed(Uint8List seed) {
+  factory PrivateKey.fromSeed(
+    Uint8List seed, {
+    Network defaultNetwork = Network.mainnet,
+    ScriptType defaultScriptType = ScriptType.P2PKH,
+  }) {
     // hmac sha512 seed with 'Bitcoin seed' to get the master key
     final hmac = crypto.Hmac(crypto.sha512, utf8.encode('Bitcoin seed'));
     final digest = hmac.convert(seed);
@@ -232,15 +352,32 @@ class PrivateKey extends PublicKey {
     final chainCode = Uint8List.fromList(digest.bytes.sublist(32, 64));
     // The public key is derived from the private key using secp256k1
     final publicKey = _pubkeyFromPrivateKey(privateKey);
-    return PrivateKey(0, 0, 0, publicKey, chainCode, privateKey);
+    return PrivateKey(
+      0,
+      0,
+      0,
+      publicKey,
+      chainCode,
+      privateKey,
+      defaultNetwork: defaultNetwork,
+      defaultScriptType: defaultScriptType,
+    );
   }
 
-  factory PrivateKey.fromXpriv(String xpriv) {
+  factory PrivateKey.fromXPrv(String xprv) {
     // Parse the xpriv string and return a PrivateKey object
-    final bytes = base58Decode(xpriv);
+    final bytes = base58Decode(xprv);
     if (bytes.length != 82) {
       throw FormatException('Invalid length: ${bytes.length}');
     }
+    // check the prefix is for a private key
+    final prefix = xprv.substring(0, 4);
+    if (!prefix.endsWith('prv')) {
+      throw ArgumentError('Invalid prefix: $prefix');
+    }
+    // set the default network and script type based on the prefix
+    final network = networkFromPrefix(prefix);
+    final scriptType = scriptTypeFromPrefix(prefix);
     // check checksum
     final checksum = bytes.sublist(78, 82);
     final calculatedChecksum = hash256(bytes.sublist(0, 78)).sublist(0, 4);
@@ -248,7 +385,6 @@ class PrivateKey extends PublicKey {
       throw FormatException('Invalid checksum');
     }
     // Extract the fields from the bytes
-    final prefix = bytes.sublist(0, 4);
     final depth = bytes[4];
     final parentFingerprint = bytesToBigInt(bytes.sublist(5, 9)).toInt();
     final childNumber = bytesToBigInt(bytes.sublist(9, 13)).toInt();
@@ -256,9 +392,8 @@ class PrivateKey extends PublicKey {
     final privateKeyPrefix = bytes[45];
     final privateKey = bytes.sublist(46, 78);
     // Validate the prefix
-    final prefixHex = bytesToHex(prefix);
-    if (!_prefixDict.containsValue(prefixHex)) {
-      throw FormatException('Invalid prefix: $prefixHex');
+    if (!_prefixDict.containsKey(prefix)) {
+      throw FormatException('Prefix not found: $prefix');
     }
     // validate the parent fingerprint
     if (depth == 0 && parentFingerprint != 0) {
@@ -274,6 +409,17 @@ class PrivateKey extends PublicKey {
         'Invalid private key prefix: ${privateKeyPrefix.toRadixString(16).padLeft(2, '0')}',
       );
     }
+    // validate the private key value
+    final privateKeyInt = bytesToBigInt(privateKey);
+    if (privateKeyInt <= BigInt.zero || privateKeyInt >= Secp256k1Point.n) {
+      throw FormatException(
+        'Invalid private key value: ${bytesToHex(privateKey)}',
+      );
+    }
+    // Ensure the private key is 32 bytes long
+    if (privateKey.length != 32) {
+      throw FormatException('Private key must be 32 bytes long');
+    }
     // The public key is derived from the private key using secp256k1
     final publicKey = _pubkeyFromPrivateKey(privateKey);
     return PrivateKey(
@@ -283,7 +429,19 @@ class PrivateKey extends PublicKey {
       publicKey,
       chainCode,
       privateKey,
+      defaultNetwork: network,
+      defaultScriptType: scriptType,
     );
+  }
+
+  Uint8List _intToKey(BigInt value) {
+    // Convert a BigInt to a 32-byte private key
+    final bytes = bigIntToBytes(value);
+    if (bytes.length > 32) {
+      throw ArgumentError('Value is too large for a private key');
+    }
+    // Pad with leading zeros to make it 32 bytes
+    return Uint8List.fromList(List<int>.filled(32 - bytes.length, 0) + bytes);
   }
 
   PrivateKey childPrivateKey(int index, {bool hardened = true}) {
@@ -300,15 +458,16 @@ class PrivateKey extends PublicKey {
       );
     }
     // Create a new key from the master key and the index
-    final data = hardened
-        ? hexToBytes(
-            '00' +
-                bytesToHex(privateKey) +
-                index.toRadixString(16).padLeft(8, '0'),
-          ) // '00' + master privkey + 4 byte index
-        : hexToBytes(
-            bytesToHex(publicKey) + index.toRadixString(16).padLeft(8, '0'),
-          ); // master pubkey + 4 byte index
+    final data =
+        hardened
+            ? hexToBytes(
+              '00' +
+                  bytesToHex(privateKey) +
+                  index.toRadixString(16).padLeft(8, '0'),
+            ) // '00' + master privkey + 4 byte index
+            : hexToBytes(
+              bytesToHex(publicKey) + index.toRadixString(16).padLeft(8, '0'),
+            ); // master pubkey + 4 byte index
     final hmac = crypto.Hmac(crypto.sha512, chainCode);
     final digest = hmac.convert(data);
     // The first 32 bytes are the child private key input, the next 32 bytes are the chain code
@@ -318,7 +477,7 @@ class PrivateKey extends PublicKey {
     final childPrivateKeyInt =
         (bytesToBigInt(privateKeyInput) + bytesToBigInt(privateKey)) %
         Secp256k1Point.n;
-    final childPrivateKey = bigIntToBytes(childPrivateKeyInt);
+    final childPrivateKey = _intToKey(childPrivateKeyInt);
     // The public key is derived from the private key using secp256k1
     final childPublicKey = _pubkeyFromPrivateKey(childPrivateKey);
     return PrivateKey(
@@ -331,7 +490,46 @@ class PrivateKey extends PublicKey {
     );
   }
 
-  String xpriv(Network network, ScriptType scriptType) {
+  PrivateKey childFromDerivationPath(String path) {
+    // Derive a child key from the derivation path
+    final parts = path.toLowerCase().replaceAll('h', "'").split('/');
+    if (parts[0] != 'm') {
+      throw FormatException('Derivation path must start with "m/"');
+    }
+    var currentKey = this;
+    for (var part in parts.sublist(1)) {
+      if (part.isEmpty) {
+        throw FormatException('Invalid part in derivation path: $part');
+      }
+      // check if hardened
+      var hardened = part.endsWith("'");
+      if (hardened) {
+        part = part.substring(0, part.length - 1); // remove the trailing '
+      }
+      // parse the index
+      var index = int.tryParse(part);
+      if (index == null) {
+        throw FormatException('Invalid index in derivation path: $part');
+      }
+      if (index < 0 || index > 0x7FFFFFFF) {
+        throw FormatException(
+          'Index ($index) must be in the range [0, 0x7FFFFFFF)',
+        );
+      }
+      // If hardened, add 0x80000000 to the index
+      if (hardened) {
+        index += 0x80000000;
+      }
+      // Derive the child public key
+      currentKey = currentKey.childPrivateKey(index, hardened: hardened);
+    }
+    return currentKey;
+  }
+
+  String xprv({Network? network, ScriptType? scriptType}) {
+    // Use the default network and script type if not provided
+    network ??= defaultNetwork;
+    scriptType ??= defaultScriptType;
     // Return the private key in xpriv format
     final prefix = switch (network) {
       Network.mainnet => switch (scriptType) {

@@ -34,7 +34,9 @@ class Secp256k1Point {
     var y = ySquared.modPow(pPlusOne ~/ BigInt.from(4), p);
 
     // check y
-    assert(y.modPow(BigInt.from(2), p) == ySquared);
+    if (y.modPow(BigInt.from(2), p) != ySquared) {
+      throw ArgumentError('Invalid X ($x): no point on the curve for this x');
+    }
 
     // select the correct value for y
     if (yParity == YParity.Even && y % BigInt.two != BigInt.zero) {

@@ -28,9 +28,9 @@ void main() async {
   print('  Depth:        ${intToHex(childKey.depth)}');
   print('  Parent Fingerprint: ${intToHex(childKey.parentFingerprint)}');
   print('  Child Number: ${intToHex(childKey.childNumber)}');
-  final xpriv = childKey.xpriv(Network.mainnet, ScriptType.P2PKH);
-  print('  xpriv: $xpriv');
-  final childKeyParsed = PrivateKey.fromXpriv(xpriv);
+  final xprv = childKey.xprv();
+  print('  xprv: $xprv');
+  final childKeyParsed = PrivateKey.fromXPrv(xprv);
   print('Parsed Child Extended Key:');
   print('  Private Key:  ${bytesToHex(childKeyParsed.privateKey)}');
   print('  Public Key:   ${bytesToHex(childKeyParsed.publicKey)}');
@@ -46,8 +46,8 @@ void main() async {
   print('  Depth:        ${intToHex(childPubKey.depth)}');
   print('  Parent Fingerprint: ${intToHex(childPubKey.parentFingerprint)}');
   print('  Child Number: ${intToHex(childPubKey.childNumber)}');
-  final xpub = childPubKey.xpub(Network.mainnet, ScriptType.P2PKH);
-  print('  xpub:  $xpub');
+  final xpub = childPubKey.xpub();
+  print('  xpub: $xpub');
   final childPubKeyParsed = PublicKey.fromXPub(xpub);
   print('Parsed Child Public Key:');
   print('  Public Key:   ${bytesToHex(childPubKeyParsed.publicKey)}');
