@@ -15,11 +15,6 @@ Uint8List _hrpExpand(String hrp) {
   for (var i = 0; i < hrpBytes.length; i++) {
     hrpExpanded[hrpBytes.length + i + 1] = hrpBytes[i] & 0x1F; // 11111 = 1F
   }
-  print('hrp: $hrp');
-  print(
-    'hrp bytes: ${hrpBytes.map((b) => b.toRadixString(2).padLeft(8, '0'))}',
-  );
-  print('hrp expanded: ${_intListAs5Bits(hrpExpanded)}');
   return hrpExpanded;
 }
 
@@ -56,7 +51,6 @@ Uint8List _convert8BitTo5Bit(Uint8List input) {
 }
 
 Uint8List _convert5BitTo8Bit(Uint8List input) {
-  print('input length: ${input.length}');
   // join to big binary string
   var strJoined = input
       .map((byte) => byte.toRadixString(2).padLeft(5, '0'))
@@ -83,17 +77,6 @@ Uint8List _checksumAs5Bits(int value) {
   return Uint8List.fromList(
     strs5bit.map((s) => int.parse(s, radix: 2)).toList(),
   );
-}
-
-String _intAs5Bits(int value) {
-  if (value < 0 || value > 31) {
-    throw ArgumentError('Value must be between 0 and 31');
-  }
-  return value.toRadixString(2).padLeft(5, '0');
-}
-
-String _intListAs5Bits(List<int> values) {
-  return values.map(_intAs5Bits).join(' ');
 }
 
 Uint8List _bech32Checksum(
@@ -125,80 +108,42 @@ Uint8List _bech32Checksum(
   ];
   // calculate checksum
   for (var i = 0; i < checksumInput.length; i++) {
-    print('chk: ${checksum.toRadixString(2).padLeft(30, '0')}');
     // get top 5 bits
     var top = checksum >> (30 - 5);
-    print('top: ${top.toRadixString(2).padLeft(5, '0')}');
     // get bottom 25 bits
     var bottom = checksum & 0x1FFFFFF; // 1111111111111111111111111 (25 bits)
-    print('bot:      ${bottom.toRadixString(2).padLeft(25, '0')}');
     // pad bottom with 5 bits
     bottom = bottom << 5;
-    print('pad:      ${bottom.toRadixString(2).padLeft(30, '0')}');
     // get next value from checksum input
     var nextValue = checksumInput[i];
-    print(
-      'grp:                               ${nextValue.toRadixString(2).padLeft(5, '0')}',
-    );
     // XOR with
     checksum = bottom ^ nextValue;
-    print('xor:      ${checksum.toRadixString(2).padLeft(30, '0')}');
 
     // XOR with generator
-    var appliedGen = false;
     if (top & 1 == 1) {
       checksum ^= generator[0];
-      appliedGen = true;
     }
-    print(
-      'gen:      ${generator[0].toRadixString(2).padLeft(30, '0')} ${appliedGen ? 'X' : ''}',
-    );
-    appliedGen = false;
     if (top & 1 << 1 == 1 << 1) {
       checksum ^= generator[1];
-      appliedGen = true;
     }
-    print(
-      'gen:      ${generator[1].toRadixString(2).padLeft(30, '0')} ${appliedGen ? 'X' : ''}',
-    );
-    appliedGen = false;
     if (top & 1 << 2 == 1 << 2) {
       checksum ^= generator[2];
-      appliedGen = true;
     }
-    print(
-      'gen:      ${generator[2].toRadixString(2).padLeft(30, '0')} ${appliedGen ? 'X' : ''}',
-    );
-    appliedGen = false;
     if (top & 1 << 3 == 1 << 3) {
       checksum ^= generator[3];
-      appliedGen = true;
     }
-    print(
-      'gen:      ${generator[3].toRadixString(2).padLeft(30, '0')} ${appliedGen ? 'X' : ''}',
-    );
-    appliedGen = false;
     if (top & 1 << 4 == 1 << 4) {
       checksum ^= generator[4];
-      appliedGen = true;
     }
-    print(
-      'gen:      ${generator[4].toRadixString(2).padLeft(30, '0')} ${appliedGen ? 'X' : ''}',
-    );
-    print('chk:      ${checksum.toRadixString(2).padLeft(30, '0')}');
-    print('');
   }
-  print('checksum: ${_intListAs5Bits(_checksumAs5Bits(checksum))}');
   // XOR with constant
   if (version == 0) {
     // constant for bech32
     checksum ^= 1;
-    print('constant: 00000 00000 00000 00000 00000 00001');
   } else {
     // constant for bech32m
     checksum ^= 0x2BC830A3; // 101011110010000011000010100011 = 2BC830A3
   }
-  print('checksum: ${_intListAs5Bits(_checksumAs5Bits(checksum))}');
   // split checksum into 5-bit groups
   return _checksumAs5Bits(checksum);
 }
@@ -239,13 +184,10 @@ String bech32Encode(
   final hrpExpanded = _hrpExpand(hrp);
   // bech32 version as 5-bit group
   final bech32Version = (version == 0 ? 0 : version - 0x50);
-  print('bech32Version: ${_intAs5Bits(bech32Version)}');
   // convert witness program to 5-bit values
   var witnessProgram = _convert8BitTo5Bit(scriptPubKey.sublist(2));
-  print('witnessProgram: ${_intListAs5Bits(witnessProgram)}');
   // calculate checksum
   final checksum = _bech32Checksum(hrpExpanded, bech32Version, witnessProgram);
-  print('checksum: $checksum');
   // combine all parts
   final bech32Parts = <int>[bech32Version, ...witnessProgram, ...checksum];
   // convert to bech32 string
