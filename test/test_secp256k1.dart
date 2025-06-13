@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_relative_lib_imports
+
 import 'package:test/test.dart';
 
 import '../lib/secp256k1.dart';
@@ -29,7 +31,7 @@ void main() {
       BigInt.parse(
         '95756321671391691422499260635489713855017934320697232784419034040341620768463',
       ),
-      YParity.Odd,
+      YParity.odd,
     );
     expect(
       p.x,
@@ -53,7 +55,7 @@ void main() {
       BigInt.parse(
         '89096489680060348378492666920240512821676435969427706206739370292263503437348',
       ),
-      YParity.Even,
+      YParity.even,
     );
     expect(
       p.x,

@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_relative_lib_imports
+
 import 'dart:typed_data';
 
 import 'package:bip39/bip39.dart';
@@ -642,7 +644,7 @@ void main() {
     expect(
       masterKey.xprv(
         network: Network.testnet,
-        scriptType: ScriptType.P2SH_P2WPKH,
+        scriptType: ScriptType.p2shP2wpkh,
       ),
       equals(
         'uprv8tXDerPXZ1QsVNjUJWTurs9kA1KGfKUAts74GCkcXtU8GwnH33GDRbNJpEqTvipfCyycARtQJhmdfWf8oKt41X9LL1zeD2pLsWmxEk3VAwd',
@@ -653,7 +655,7 @@ void main() {
     expect(
       childKey.xprv(
         network: Network.testnet,
-        scriptType: ScriptType.P2SH_P2WPKH,
+        scriptType: ScriptType.p2shP2wpkh,
       ),
       equals(
         'uprv91G7gZkzehuMVxDJTYE6tLivdF8e4rvzSu1LFfKw3b2Qx1Aj8vpoFnHdfUZ3hmi9jsvPifmZ24RTN2KhwB8BfMLTVqaBReibyaFFcTP1s9n',
@@ -662,7 +664,7 @@ void main() {
     expect(
       childKey.xpub(
         network: Network.testnet,
-        scriptType: ScriptType.P2SH_P2WPKH,
+        scriptType: ScriptType.p2shP2wpkh,
       ),
       equals(
         'upub5EFU65HtV5TeiSHmZZm7FUffBGy8UKeqp7vw43jYbvZPpoVsgU93oac7Wk3u6moKegAEWtGNF8DehrnHtv21XXEMYRUocHqguyjknFHYfgY',
@@ -706,13 +708,13 @@ void main() {
   });
   test('bip84 test vectors', () {
     expect(
-      masterKey.xprv(scriptType: ScriptType.P2WPKH),
+      masterKey.xprv(scriptType: ScriptType.p2wpkh),
       equals(
         'zprvAWgYBBk7JR8Gjrh4UJQ2uJdG1r3WNRRfURiABBE3RvMXYSrRJL62XuezvGdPvG6GFBZduosCc1YP5wixPox7zhZLfiUm8aunE96BBa4Kei5',
       ),
     );
     expect(
-      masterKey.xpub(scriptType: ScriptType.P2WPKH),
+      masterKey.xpub(scriptType: ScriptType.p2wpkh),
       equals(
         'zpub6jftahH18ngZxLmXaKw3GSZzZsszmt9WqedkyZdezFtWRFBZqsQH5hyUmb4pCEeZGmVfQuP5bedXTB8is6fTv19U1GQRyQUKQGUTzyHACMF',
       ),
@@ -720,13 +722,13 @@ void main() {
     // Account 0, root = m/84'/0'/0'
     var childKey = masterKey.childFromDerivationPath('m/84h/0h/0h');
     expect(
-      childKey.xprv(scriptType: ScriptType.P2WPKH),
+      childKey.xprv(scriptType: ScriptType.p2wpkh),
       equals(
         'zprvAdG4iTXWBoARxkkzNpNh8r6Qag3irQB8PzEMkAFeTRXxHpbF9z4QgEvBRmfvqWvGp42t42nvgGpNgYSJA9iefm1yYNZKEm7z6qUWCroSQnE',
       ),
     );
     expect(
-      childKey.xpub(scriptType: ScriptType.P2WPKH),
+      childKey.xpub(scriptType: ScriptType.p2wpkh),
       equals(
         'zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs',
       ),

@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_relative_lib_imports
+
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -44,7 +46,7 @@ void main() {
     var list3 = [4, 5, 6];
     expect(listEquals(list1, list2), isTrue);
     expect(listEquals(list1, list3), isFalse);
-    expect(listEquals(null, null), isTrue);
+    expect(listEquals<int>(null, null), isTrue);
     expect(listEquals(null, list1), isFalse);
     expect(listEquals(list1, null), isFalse);
   });

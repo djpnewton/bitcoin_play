@@ -1,4 +1,4 @@
-enum YParity { Odd, Even }
+enum YParity { odd, even }
 
 class Secp256k1Point {
   // secp256k1 curve y² = x³ + ax + b
@@ -39,10 +39,10 @@ class Secp256k1Point {
     }
 
     // select the correct value for y
-    if (yParity == YParity.Even && y % BigInt.two != BigInt.zero) {
+    if (yParity == YParity.even && y % BigInt.two != BigInt.zero) {
       y = (p - y) % p;
     }
-    if (yParity == YParity.Odd && y % BigInt.two == BigInt.zero) {
+    if (yParity == YParity.odd && y % BigInt.two == BigInt.zero) {
       y = (p - y) % p;
     }
     return Secp256k1Point(x, y);

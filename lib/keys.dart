@@ -9,9 +9,9 @@ import 'base58.dart';
 import 'common.dart';
 
 enum ScriptType {
-  P2PKH, // 'Pay to Public Key Hash'
-  P2SH_P2WPKH, // 'Pay to Witness Public Key Hash' wrapped in 'Pay to Script Hash'
-  P2WPKH, // 'Pay to Witness Public Key Hash'
+  p2pkh, // 'Pay to Public Key Hash'
+  p2shP2wpkh, // 'Pay to Witness Public Key Hash' wrapped in 'Pay to Script Hash'
+  p2wpkh, // 'Pay to Witness Public Key Hash'
 }
 
 const _prefixDict = {
@@ -69,19 +69,19 @@ Network networkFromPrefix(String prefix) {
 ScriptType scriptTypeFromPrefix(String prefix) {
   // Convert the prefix to ScriptType
   return switch (prefix) {
-    'xprv' => ScriptType.P2PKH,
-    'yprv' => ScriptType.P2SH_P2WPKH,
-    'zprv' => ScriptType.P2WPKH,
-    'tprv' => ScriptType.P2PKH,
-    'uprv' => ScriptType.P2SH_P2WPKH,
-    'vprv' => ScriptType.P2WPKH,
+    'xprv' => ScriptType.p2pkh,
+    'yprv' => ScriptType.p2shP2wpkh,
+    'zprv' => ScriptType.p2wpkh,
+    'tprv' => ScriptType.p2pkh,
+    'uprv' => ScriptType.p2shP2wpkh,
+    'vprv' => ScriptType.p2wpkh,
 
-    'xpub' => ScriptType.P2PKH,
-    'ypub' => ScriptType.P2SH_P2WPKH,
-    'zpub' => ScriptType.P2WPKH,
-    'tpub' => ScriptType.P2PKH,
-    'upub' => ScriptType.P2SH_P2WPKH,
-    'vpub' => ScriptType.P2WPKH,
+    'xpub' => ScriptType.p2pkh,
+    'ypub' => ScriptType.p2shP2wpkh,
+    'zpub' => ScriptType.p2wpkh,
+    'tpub' => ScriptType.p2pkh,
+    'upub' => ScriptType.p2shP2wpkh,
+    'vpub' => ScriptType.p2wpkh,
     _ => throw ArgumentError('Unknown prefix: $prefix'),
   };
 }
@@ -89,8 +89,8 @@ ScriptType scriptTypeFromPrefix(String prefix) {
 YParity? pubkeyPrefixToYParity(int prefix) {
   // Convert the public key prefix to YParity
   return switch (prefix) {
-    0x02 => YParity.Even, // Compressed public key with even y-coordinate
-    0x03 => YParity.Odd, // Compressed public key with odd y-coordinate
+    0x02 => YParity.even, // Compressed public key with even y-coordinate
+    0x03 => YParity.odd, // Compressed public key with odd y-coordinate
     _ => null, // Invalid prefix
   };
 }
@@ -98,8 +98,8 @@ YParity? pubkeyPrefixToYParity(int prefix) {
 String yParityToPubkeyPrefix(YParity yParity) {
   // Convert YParity to public key prefix
   return switch (yParity) {
-    YParity.Even => '02', // Compressed public key with even y-coordinate
-    YParity.Odd => '03', // Compressed public key with odd y-coordinate
+    YParity.even => '02', // Compressed public key with even y-coordinate
+    YParity.odd => '03', // Compressed public key with odd y-coordinate
   };
 }
 
@@ -121,7 +121,7 @@ class PublicKey {
     this.publicKey,
     this.chainCode, {
     this.defaultNetwork = Network.mainnet,
-    this.defaultScriptType = ScriptType.P2PKH,
+    this.defaultScriptType = ScriptType.p2pkh,
   });
 
   factory PublicKey.fromXPub(String xpub) {
@@ -249,7 +249,7 @@ class PublicKey {
     ).add(_compressedPublicKeyToPoint(publicKey));
     // compressed public key prefix: 0x02 or 0x03
     final prefix = yParityToPubkeyPrefix(
-      childPublicKeyPoint.y.isEven ? YParity.Even : YParity.Odd,
+      childPublicKeyPoint.y.isEven ? YParity.even : YParity.odd,
     );
     final childPublicKey = Uint8List.fromList(
       hexToBytes(
@@ -272,14 +272,14 @@ class PublicKey {
     // Return the public key in xpub format
     final prefix = switch (network) {
       Network.mainnet => switch (scriptType) {
-        ScriptType.P2PKH => _prefixDict['xpub']!,
-        ScriptType.P2SH_P2WPKH => _prefixDict['ypub']!,
-        ScriptType.P2WPKH => _prefixDict['zpub']!,
+        ScriptType.p2pkh => _prefixDict['xpub']!,
+        ScriptType.p2shP2wpkh => _prefixDict['ypub']!,
+        ScriptType.p2wpkh => _prefixDict['zpub']!,
       },
       Network.testnet => switch (scriptType) {
-        ScriptType.P2PKH => _prefixDict['tpub']!,
-        ScriptType.P2SH_P2WPKH => _prefixDict['upub']!,
-        ScriptType.P2WPKH => _prefixDict['vpub']!,
+        ScriptType.p2pkh => _prefixDict['tpub']!,
+        ScriptType.p2shP2wpkh => _prefixDict['upub']!,
+        ScriptType.p2wpkh => _prefixDict['vpub']!,
       },
     };
     final depthHex = depth.toRadixString(16).padLeft(2, '0');
@@ -304,23 +304,15 @@ class PrivateKey extends PublicKey {
   Uint8List privateKey;
 
   PrivateKey(
-    int depth,
-    int parentFingerprint,
-    int childNumber,
-    Uint8List publicKey,
-    Uint8List chainCode,
+    super.depth,
+    super.parentFingerprint,
+    super.childNumber,
+    super.publicKey,
+    super.chainCode,
     this.privateKey, {
-    Network defaultNetwork = Network.mainnet,
-    ScriptType defaultScriptType = ScriptType.P2PKH,
-  }) : super(
-         depth,
-         parentFingerprint,
-         childNumber,
-         publicKey,
-         chainCode,
-         defaultNetwork: defaultNetwork,
-         defaultScriptType: defaultScriptType,
-       );
+    super.defaultNetwork,
+    super.defaultScriptType,
+  });
 
   static Uint8List _pubkeyFromPrivateKey(Uint8List privateKey) {
     // Derive the public key from the private key using secp256k1
@@ -329,7 +321,7 @@ class PrivateKey extends PublicKey {
     final x = point.x.toRadixString(16).padLeft(64, '0');
     // Compressed public key format: 0x02 or 0x03 + x
     final prefix = yParityToPubkeyPrefix(
-      point.y.isEven ? YParity.Even : YParity.Odd,
+      point.y.isEven ? YParity.even : YParity.odd,
     );
     return Uint8List.fromList(hexToBytes(prefix + x));
   }
@@ -338,7 +330,7 @@ class PrivateKey extends PublicKey {
   factory PrivateKey.fromSeed(
     Uint8List seed, {
     Network defaultNetwork = Network.mainnet,
-    ScriptType defaultScriptType = ScriptType.P2PKH,
+    ScriptType defaultScriptType = ScriptType.p2pkh,
   }) {
     // hmac sha512 seed with 'Bitcoin seed' to get the master key
     final hmac = crypto.Hmac(crypto.sha512, utf8.encode('Bitcoin seed'));
@@ -456,9 +448,7 @@ class PrivateKey extends PublicKey {
     // Create a new key from the master key and the index
     final data = hardened
         ? hexToBytes(
-            '00' +
-                bytesToHex(privateKey) +
-                index.toRadixString(16).padLeft(8, '0'),
+            '00${bytesToHex(privateKey)}${index.toRadixString(16).padLeft(8, '0')}',
           ) // '00' + master privkey + 4 byte index
         : hexToBytes(
             bytesToHex(publicKey) + index.toRadixString(16).padLeft(8, '0'),
@@ -528,14 +518,14 @@ class PrivateKey extends PublicKey {
     // Return the private key in xprv format
     final prefix = switch (network) {
       Network.mainnet => switch (scriptType) {
-        ScriptType.P2PKH => _prefixDict['xprv']!,
-        ScriptType.P2SH_P2WPKH => _prefixDict['yprv']!,
-        ScriptType.P2WPKH => _prefixDict['zprv']!,
+        ScriptType.p2pkh => _prefixDict['xprv']!,
+        ScriptType.p2shP2wpkh => _prefixDict['yprv']!,
+        ScriptType.p2wpkh => _prefixDict['zprv']!,
       },
       Network.testnet => switch (scriptType) {
-        ScriptType.P2PKH => _prefixDict['tprv']!,
-        ScriptType.P2SH_P2WPKH => _prefixDict['uprv']!,
-        ScriptType.P2WPKH => _prefixDict['vprv']!,
+        ScriptType.p2pkh => _prefixDict['tprv']!,
+        ScriptType.p2shP2wpkh => _prefixDict['uprv']!,
+        ScriptType.p2wpkh => _prefixDict['vprv']!,
       },
     };
     final depthHex = depth.toRadixString(16).padLeft(2, '0');
@@ -544,7 +534,7 @@ class PrivateKey extends PublicKey {
         .padLeft(8, '0');
     final childNumberHex = childNumber.toRadixString(16).padLeft(8, '0');
     final chainCodeHex = bytesToHex(chainCode);
-    final keyHex = '00' + bytesToHex(privateKey);
+    final keyHex = '00${bytesToHex(privateKey)}';
     final serialized = hexToBytes(
       '$prefix$depthHex$parentFingerprintHex$childNumberHex$chainCodeHex$keyHex',
     );

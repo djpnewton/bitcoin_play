@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:typed_data';
 
 import 'utils.dart';
@@ -7,7 +9,7 @@ import 'keys.dart';
 void main() async {
   final mnemonic =
       'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-  print('Mnemonic words: ${mnemonic}');
+  print('Mnemonic words: $mnemonic');
 
   print('Validating mnemonic: ${mnemonicValid(mnemonic)}');
 

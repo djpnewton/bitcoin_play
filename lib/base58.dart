@@ -22,7 +22,7 @@ String base58Encode(Uint8List input) {
   // handle leading zeros in the input
   for (var byte in input) {
     if (byte == 0) {
-      result = '1' + result; // prepend '1' for each leading zero byte
+      result = '1$result'; // prepend '1' for each leading zero byte
     } else {
       break; // stop when we hit a non-zero byte
     }

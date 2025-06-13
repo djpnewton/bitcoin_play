@@ -10,8 +10,9 @@ String bytesToHex(Uint8List bytes) {
 }
 
 Uint8List hexToBytes(String hex) {
-  if (hex.length % 2 != 0)
+  if (hex.length % 2 != 0) {
     throw ArgumentError('Hex string must have an even length');
+  }
   // remove any leading '0x' if present
   if (hex.startsWith('0x')) {
     hex = hex.substring(2);
@@ -29,7 +30,7 @@ Uint8List randomBits(int bits) {
   assert(bits % 8 == 0);
   int bytes = bits ~/ 8;
   final byteArray = Uint8List(bytes);
-  final rand = new Random.secure();
+  final rand = Random.secure();
   while (bytes > 0) {
     final byte = rand.nextInt(256); // 2^8
     byteArray[--bytes] = byte;
