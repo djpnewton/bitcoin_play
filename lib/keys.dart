@@ -7,12 +7,7 @@ import 'secp256k1.dart';
 import 'utils.dart';
 import 'base58.dart';
 import 'common.dart';
-
-enum ScriptType {
-  p2pkh, // 'Pay to Public Key Hash'
-  p2shP2wpkh, // 'Pay to Witness Public Key Hash' wrapped in 'Pay to Script Hash'
-  p2wpkh, // 'Pay to Witness Public Key Hash'
-}
+import 'address.dart';
 
 const _prefixDict = {
   'xprv': '0488ade4', // Mainnet - P2PKH or P2SH  - m/44'/0'
@@ -205,8 +200,8 @@ class PublicKey {
 
   Secp256k1Point _compressedPublicKeyToPoint(Uint8List publicKey) {
     // Convert a compressed public key to an integer
-    if (publicKey.length != 33) {
-      throw ArgumentError('Compressed public key must be 33 bytes long');
+    if (!isValidCompressedPublicKey(publicKey)) {
+      throw ArgumentError('Invalid compressed public key: $publicKey');
     }
     // get Y parity from the first byte
     final yParity = pubkeyPrefixToYParity(publicKey[0]);
@@ -281,6 +276,9 @@ class PublicKey {
         ScriptType.p2shP2wpkh => _prefixDict['upub']!,
         ScriptType.p2wpkh => _prefixDict['vpub']!,
       },
+      Network.regtest => throw ArgumentError(
+        'Regtest network is not supported for xpub',
+      ),
     };
     final depthHex = depth.toRadixString(16).padLeft(2, '0');
     final parentFingerprintHex = parentFingerprint
@@ -297,6 +295,22 @@ class PublicKey {
     // Return the xpub in base58 format
     final xpubBytes = Uint8List.fromList(serialized + checksum);
     return base58Encode(xpubBytes);
+  }
+
+  String address({Network? network, ScriptType? scriptType}) {
+    // Use the default network and script type if not provided
+    network ??= defaultNetwork;
+    scriptType ??= defaultScriptType;
+    // dont allow master keys to be used for addresses
+    if (depth == 0) {
+      throw ArgumentError('Master keys cannot be used for addresses');
+    }
+    // Return the address in the specified format
+    return switch (scriptType) {
+      ScriptType.p2pkh => p2pkhAddress(publicKey, network: network),
+      ScriptType.p2shP2wpkh => p2shP2wpkhAddress(publicKey, network: network),
+      ScriptType.p2wpkh => p2wpkhAddress(publicKey, network: network),
+    };
   }
 }
 
@@ -527,6 +541,9 @@ class PrivateKey extends PublicKey {
         ScriptType.p2shP2wpkh => _prefixDict['uprv']!,
         ScriptType.p2wpkh => _prefixDict['vprv']!,
       },
+      Network.regtest => throw ArgumentError(
+        'Regtest network is not supported for xprv',
+      ),
     };
     final depthHex = depth.toRadixString(16).padLeft(2, '0');
     final parentFingerprintHex = parentFingerprint

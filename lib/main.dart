@@ -2,6 +2,7 @@
 
 import 'dart:typed_data';
 
+import 'common.dart';
 import 'utils.dart';
 import 'mnemonic.dart';
 import 'keys.dart';
@@ -59,6 +60,31 @@ void main() async {
     '  Parent Fingerprint: ${intToHex(childPubKeyParsed.parentFingerprint)}',
   );
   print('  Child Number: ${intToHex(childPubKeyParsed.childNumber)}');
+
+  var address = childPubKey.address(network: Network.mainnet);
+  print('P2PKH Address (m/1): $address');
+  address = childPubKey.address(network: Network.testnet);
+  print('P2PKH Address (m/1) Testnet: $address');
+  address = childPubKey.address(
+    network: Network.mainnet,
+    scriptType: ScriptType.p2shP2wpkh,
+  );
+  print('P2SH-P2WPKH Address (m/1): $address');
+  address = childPubKey.address(
+    network: Network.testnet,
+    scriptType: ScriptType.p2shP2wpkh,
+  );
+  print('P2SH-P2WPKH Address (m/1) Testnet: $address');
+  address = childPubKey.address(
+    network: Network.mainnet,
+    scriptType: ScriptType.p2wpkh,
+  );
+  print('P2WPKH Address (m/1): $address');
+  address = childPubKey.address(
+    network: Network.testnet,
+    scriptType: ScriptType.p2wpkh,
+  );
+  print('P2WPKH Address (m/1) Testnet: $address');
 }
 
 Uint8List intToBytes(int value) {
