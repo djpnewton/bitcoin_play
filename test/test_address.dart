@@ -31,9 +31,65 @@ void main() {
     );
   });
   test('p2shP2wpkhAddress() creates a P2SH-P2WPKH address', () {
-    //TODO
+    final publicKey = hexToBytes(
+      '030305aff85dd48d32aa8fea019e09bed36db9db18b46f8339d0ad1cd7a11210c9',
+    );
+    final addressMainnet = p2shP2wpkhAddress(
+      publicKey,
+      network: Network.mainnet,
+    );
+    final addressTestnet = p2shP2wpkhAddress(
+      publicKey,
+      network: Network.testnet,
+    );
+    expect(addressMainnet, equals('3EGHyaUqjngxeaMrDC8KaNE3R2rfmADUqM'));
+    expect(addressTestnet, equals('2N5pW3KQsMFCJrMzPtKkCCKDJdP4qdAy7tD'));
+    // invalid length
+    var publicKeyInvalid = hexToBytes(
+      '030305aff85dd48d32aa8fea019e09bed36db9db18b46f8339d0ad1cd7a11210c9ff',
+    );
+    expect(
+      () => p2shP2wpkhAddress(publicKeyInvalid, network: Network.mainnet),
+      throwsArgumentError,
+    );
+    // invalid prefix
+    publicKeyInvalid = hexToBytes(
+      '050305aff85dd48d32aa8fea019e09bed36db9db18b46f8339d0ad1cd7a11210c9',
+    );
+    expect(
+      () => p2shP2wpkhAddress(publicKeyInvalid, network: Network.mainnet),
+      throwsArgumentError,
+    );
   });
   test('p2wpkhAddress() creates a P2WPKH address', () {
-    //TODO
+    var publicKey = hexToBytes(
+      '02d0b6a6e2acf8f3c2ff2bd17ebb01798924db2c42f0f6724fa09169a72cc48dae',
+    );
+    var addressMainnet = p2wpkhAddress(publicKey, network: Network.mainnet);
+    var addressTestnet = p2wpkhAddress(publicKey, network: Network.testnet);
+    expect(
+      addressMainnet,
+      equals('bc1qmdextqm66f2prkp4vkjexsc6trp56956w5rm0e'),
+    );
+    expect(
+      addressTestnet,
+      equals('tb1qmdextqm66f2prkp4vkjexsc6trp56956yjcg52'),
+    );
+    // invalid length
+    var publicKeyInvalid = hexToBytes(
+      '02d0b6a6e2acf8f3c2ff2bd17ebb01798924db2c42f0f6724fa09169a72cc48daeff',
+    );
+    expect(
+      () => p2wpkhAddress(publicKeyInvalid, network: Network.mainnet),
+      throwsArgumentError,
+    );
+    // invalid prefix
+    publicKeyInvalid = hexToBytes(
+      '06d0b6a6e2acf8f3c2ff2bd17ebb01798924db2c42f0f6724fa09169a72cc48dae',
+    );
+    expect(
+      () => p2wpkhAddress(publicKeyInvalid, network: Network.mainnet),
+      throwsArgumentError,
+    );
   });
 }

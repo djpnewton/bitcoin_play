@@ -9,6 +9,7 @@ import '../lib/keys.dart';
 import '../lib/utils.dart';
 import '../lib/common.dart';
 import '../lib/wif.dart';
+import '../lib/base58.dart';
 
 void main() {
   late Uint8List seed;
@@ -693,18 +694,25 @@ void main() {
         ),
       ),
     );
-
-    //TODO
-
-    /*
-      // Address derivation
-      keyhash = HASH160(account0recvPublicKeyHex) = 0x38971f73930f6c141d977ac4fd4a727c854935b3
-      scriptSig = <0 <keyhash>> = 0x001438971f73930f6c141d977ac4fd4a727c854935b3
-      addressBytes = HASH160(scriptSig) = 0x336caa13e08b96080a32b5d818d59b4ab3b36742
-
-      // addressBytes base58check encoded for testnet
-      address = base58check(prefix | addressBytes) = 2Mww8dCYPUpKHofjgcXcBCEGmniw9CoaiD2 (testnet)
-    */
+    // Address derivation
+    final keyhash = hash160(childKey.publicKey);
+    expect(
+      keyhash,
+      equals(hexToBytes('0x38971f73930f6c141d977ac4fd4a727c854935b3')),
+    );
+    final scriptSig = Uint8List.fromList([0, 20] + keyhash);
+    final scriptHash = hash160(scriptSig);
+    expect(
+      scriptHash,
+      equals(hexToBytes('0x336caa13e08b96080a32b5d818d59b4ab3b36742')),
+    );
+    final address = childKey.address(
+      scriptType: ScriptType.p2shP2wpkh,
+      network: Network.testnet,
+    );
+    expect(address, equals('2Mww8dCYPUpKHofjgcXcBCEGmniw9CoaiD2'));
+    final addressBytes = base58DecodeCheck(address).sublist(1); // Skip prefix
+    expect(addressBytes, equals(scriptHash));
   });
   test('bip84 test vectors', () {
     expect(
@@ -733,24 +741,62 @@ void main() {
         'zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs',
       ),
     );
-
-    //TODO
-
-    /*
-    // Account 0, first receiving address = m/84'/0'/0'/0/0
-    privkey = KyZpNDKnfs94vbrwhJneDi77V6jF64PWPF8x5cdJb8ifgg2DUc9d
-    pubkey  = 0330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c
-    address = bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu
-
+    // Account 0, first receiving private key = m/84'/0'/0'/0/0
+    childKey = masterKey.childFromDerivationPath('m/84h/0h/0h/0/0');
+    var wif = Wif(Network.mainnet, childKey.privateKey, true);
+    expect(
+      wif.toWifString(),
+      equals('KyZpNDKnfs94vbrwhJneDi77V6jF64PWPF8x5cdJb8ifgg2DUc9d'),
+    );
+    expect(
+      childKey.publicKey,
+      equals(
+        hexToBytes(
+          '0330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c',
+        ),
+      ),
+    );
+    expect(
+      childKey.address(scriptType: ScriptType.p2wpkh, network: Network.mainnet),
+      equals('bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu'),
+    );
     // Account 0, second receiving address = m/84'/0'/0'/0/1
-    privkey = Kxpf5b8p3qX56DKEe5NqWbNUP9MnqoRFzZwHRtsFqhzuvUJsYZCy
-    pubkey  = 03e775fd51f0dfb8cd865d9ff1cca2a158cf651fe997fdc9fee9c1d3b5e995ea77
-    address = bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g
-
+    childKey = masterKey.childFromDerivationPath('m/84h/0h/0h/0/1');
+    wif = Wif(Network.mainnet, childKey.privateKey, true);
+    expect(
+      wif.toWifString(),
+      equals('Kxpf5b8p3qX56DKEe5NqWbNUP9MnqoRFzZwHRtsFqhzuvUJsYZCy'),
+    );
+    expect(
+      childKey.publicKey,
+      equals(
+        hexToBytes(
+          '03e775fd51f0dfb8cd865d9ff1cca2a158cf651fe997fdc9fee9c1d3b5e995ea77',
+        ),
+      ),
+    );
+    expect(
+      childKey.address(scriptType: ScriptType.p2wpkh, network: Network.mainnet),
+      equals('bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g'),
+    );
     // Account 0, first change address = m/84'/0'/0'/1/0
-    privkey = KxuoxufJL5csa1Wieb2kp29VNdn92Us8CoaUG3aGtPtcF3AzeXvF
-    pubkey  = 03025324888e429ab8e3dbaf1f7802648b9cd01e9b418485c5fa4c1b9b5700e1a6
-    address = bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el
-  */
+    childKey = masterKey.childFromDerivationPath('m/84h/0h/0h/1/0');
+    wif = Wif(Network.mainnet, childKey.privateKey, true);
+    expect(
+      wif.toWifString(),
+      equals('KxuoxufJL5csa1Wieb2kp29VNdn92Us8CoaUG3aGtPtcF3AzeXvF'),
+    );
+    expect(
+      childKey.publicKey,
+      equals(
+        hexToBytes(
+          '03025324888e429ab8e3dbaf1f7802648b9cd01e9b418485c5fa4c1b9b5700e1a6',
+        ),
+      ),
+    );
+    expect(
+      childKey.address(scriptType: ScriptType.p2wpkh, network: Network.mainnet),
+      equals('bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el'),
+    );
   });
 }
