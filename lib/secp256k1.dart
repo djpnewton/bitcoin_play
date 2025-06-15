@@ -79,17 +79,28 @@ class Secp256k1Point {
   }
 
   Secp256k1Point multiply(BigInt k) {
-    // double-and-add algorithm
-    Secp256k1Point current = this;
-    final binary = k.toRadixString(2);
+    // double and add algorithm for scalar multiplication
+    // constant time algo (always as if k was 256 1s)
+    var current = this;
+    var currentFake = this;
 
-    binary.runes.skip(1).forEach((c) {
+    final binary = k.toRadixString(2).padLeft(256, '0');
+
+    var active = false;
+    for (var c in binary.runes) {
       var char = String.fromCharCode(c);
-      current = current.double();
-      if (char == '1') {
-        current = current.add(this);
+      if (active) {
+        current = current.double();
+      } else {
+        currentFake = currentFake.double();
       }
-    });
+      if (char == '1' && active) {
+        current = current.add(this);
+      } else {
+        currentFake = currentFake.add(this);
+      }
+      if (char == '1') active = true;
+    }
 
     return current;
   }

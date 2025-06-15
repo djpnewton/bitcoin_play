@@ -73,19 +73,28 @@ bool listEquals<T>(List<T>? a, List<T>? b) {
   return true;
 }
 
+Uint8List ripemd160(Uint8List data) {
+  final ripemd160 = hashlib.ripemd160;
+  final hash = ripemd160.convert(data);
+  return Uint8List.fromList(hash.bytes);
+}
+
+Uint8List sha256(Uint8List data) {
+  final sha256 = crypto.sha256;
+  final hash = sha256.convert(data);
+  return Uint8List.fromList(hash.bytes);
+}
+
 /// compute the hash256 (ie SHA-256(SHA-256(data))) of the input data
 Uint8List hash256(Uint8List data) {
-  final sha256 = crypto.sha256;
-  final firstHash = sha256.convert(data);
-  final secondHash = sha256.convert(firstHash.bytes);
-  return Uint8List.fromList(secondHash.bytes);
+  final firstHash = sha256(data);
+  final secondHash = sha256(firstHash);
+  return secondHash;
 }
 
 /// compute the hash160 (ie RIPEMD-160(SHA-256(data))) of the input data
 Uint8List hash160(Uint8List data) {
-  final sha256 = crypto.sha256;
-  final firstHash = sha256.convert(data);
-  final ripemd160 = hashlib.ripemd160;
-  final secondHash = ripemd160.convert(firstHash.bytes);
-  return Uint8List.fromList(secondHash.bytes);
+  final firstHash = sha256(data);
+  final secondHash = ripemd160(firstHash);
+  return secondHash;
 }

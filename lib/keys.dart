@@ -328,7 +328,7 @@ class PrivateKey extends PublicKey {
     super.defaultScriptType,
   });
 
-  static Uint8List _pubkeyFromPrivateKey(Uint8List privateKey) {
+  static Uint8List pubkeyFromPrivateKey(Uint8List privateKey) {
     // Derive the public key from the private key using secp256k1
     final point = PublicKey._pointFromData(privateKey);
     // Convert the point to bytes (compressed format)
@@ -353,7 +353,7 @@ class PrivateKey extends PublicKey {
     final privateKey = Uint8List.fromList(digest.bytes.sublist(0, 32));
     final chainCode = Uint8List.fromList(digest.bytes.sublist(32, 64));
     // The public key is derived from the private key using secp256k1
-    final publicKey = _pubkeyFromPrivateKey(privateKey);
+    final publicKey = pubkeyFromPrivateKey(privateKey);
     return PrivateKey(
       0,
       0,
@@ -423,7 +423,7 @@ class PrivateKey extends PublicKey {
       throw FormatException('Private key must be 32 bytes long');
     }
     // The public key is derived from the private key using secp256k1
-    final publicKey = _pubkeyFromPrivateKey(privateKey);
+    final publicKey = pubkeyFromPrivateKey(privateKey);
     return PrivateKey(
       depth,
       parentFingerprint,
@@ -478,7 +478,7 @@ class PrivateKey extends PublicKey {
         Secp256k1Point.n;
     final childPrivateKey = _intToKey(childPrivateKeyInt);
     // The public key is derived from the private key using secp256k1
-    final childPublicKey = _pubkeyFromPrivateKey(childPrivateKey);
+    final childPublicKey = pubkeyFromPrivateKey(childPrivateKey);
     return PrivateKey(
       depth + 1,
       fingerprint(),

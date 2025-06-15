@@ -17,8 +17,16 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.4.5"
-  args:
+  ansi_modifier:
     dependency: transitive
+    description:
+      name: ansi_modifier
+      sha256: "4b97c241f345e49c929bd56d0198b567b7dfcca7ec8d4f798745c9ced998684c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.4"
+  args:
+    dependency: "direct main"
     description:
       name: args
       sha256: d0481093c50b1da8910eb0bb301626d4d8eb7284aa739614d2b394ee09e3ea04
@@ -33,6 +41,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.0"
+  benchmark_runner:
+    dependency: "direct dev"
+    description:
+      name: benchmark_runner
+      sha256: "9ed84b44285846d5693cb34fd95a3f7dbf11be9794d049a9acac3b1682610b89"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.1"
   bip39:
     dependency: "direct dev"
     description:
@@ -97,6 +113,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.7.0"
+  exception_templates:
+    dependency: transitive
+    description:
+      name: exception_templates
+      sha256: "517f7c770da690073663f867ee2057ae2f4ffb28edae9da9faa624aa29ac76eb"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.1"
   ffi:
     dependency: transitive
     description:
@@ -185,6 +209,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.7"
+  lazy_memo:
+    dependency: transitive
+    description:
+      name: lazy_memo
+      sha256: dcb30b4184a6d767e1d779d74ce784d752d38313b8fb4bad6b659ae7af4bb34d
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.3"
   lints:
     dependency: "direct dev"
     description:
