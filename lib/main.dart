@@ -103,8 +103,8 @@ class ExampleCommand extends Command<void> {
 
 void main(List<String> args) async {
   CommandRunner<void>(
-      'bitcoin_play',
-      'A command line interface for the bitcoin_play library.',
+      'dartcoin',
+      'A command line interface for the dartcoin library.',
     )
     ..addCommand(ExampleCommand())
     ..run(args);

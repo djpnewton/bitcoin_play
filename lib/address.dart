@@ -1,10 +1,9 @@
 import 'dart:typed_data';
 
-import 'package:bitcoin_play/utils.dart';
-
 import 'common.dart';
 import 'base58.dart';
 import 'bech32.dart';
+import 'utils.dart';
 
 // Implementation for generating a P2PKH address from a public key
 String p2pkhAddress(Uint8List publicKey, {Network network = Network.mainnet}) {

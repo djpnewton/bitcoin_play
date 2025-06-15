@@ -1,5 +1,5 @@
-name: bitcoin_play
-description: A simple Dart project for bitcoin experiments.
+name: dartcoin
+description: A simple Dart library for bitcoin wallets.
 version: 0.1.0
 
 environment:
