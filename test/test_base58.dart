@@ -4,8 +4,8 @@ import 'dart:typed_data';
 
 import 'package:test/test.dart';
 
-import '../lib/base58.dart';
-import '../lib/utils.dart';
+import '../lib/src/base58.dart';
+import '../lib/src/utils.dart';
 
 void main() {
   test('base58Encode', () {

@@ -2,38 +2,35 @@
 
 import 'package:test/test.dart';
 
-import '../lib/utils.dart';
-import '../lib/common.dart';
-import '../lib/wif.dart';
+import '../lib/src/utils.dart';
+import '../lib/src/common.dart';
+import '../lib/src/wif.dart';
 
 void main() {
   test('toWifString() creates WIF string', () {
-    var wif =
-        Wif(
-          Network.mainnet,
-          hexToBytes(
-            'b3ff86d8d19fd1d9b6b6691b75f8b291af3a2285700cf608495bbc9e0639b719',
-          ),
-          true,
-        ).toWifString();
+    var wif = Wif(
+      Network.mainnet,
+      hexToBytes(
+        'b3ff86d8d19fd1d9b6b6691b75f8b291af3a2285700cf608495bbc9e0639b719',
+      ),
+      true,
+    ).toWifString();
     expect(wif, equals('L3FbyKikEg3DBY88Dp4iHVsAwfJWRjbSVuY1ECQTuq1TvkuntpFW'));
-    wif =
-        Wif(
-          Network.testnet,
-          hexToBytes(
-            '8a36eaeed160837630d1b24f8bacd139aaf8318c588ca3d085c12b090879a8b3',
-          ),
-          true,
-        ).toWifString();
+    wif = Wif(
+      Network.testnet,
+      hexToBytes(
+        '8a36eaeed160837630d1b24f8bacd139aaf8318c588ca3d085c12b090879a8b3',
+      ),
+      true,
+    ).toWifString();
     expect(wif, equals('cSDNZiU8cg8VMsidiqoFSKMBfydJMUMr1PDecvde8asrQ5NT44cn'));
-    wif =
-        Wif(
-          Network.testnet,
-          hexToBytes(
-            '9708d206fbc09ddde7048950eaf857893ed9a4ce525551ce0bf76cb79be35490',
-          ),
-          false,
-        ).toWifString();
+    wif = Wif(
+      Network.testnet,
+      hexToBytes(
+        '9708d206fbc09ddde7048950eaf857893ed9a4ce525551ce0bf76cb79be35490',
+      ),
+      false,
+    ).toWifString();
     expect(wif, equals('92jS8pYoXzvbdnCdVpHQHiUpdPLD1crkh24CYy632onyAdxNLJg'));
   });
   test('fromWifString() parses WIF string', () {

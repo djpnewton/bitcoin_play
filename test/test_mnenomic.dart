@@ -5,8 +5,8 @@ import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:bip39/bip39.dart' as bip39;
 
-import '../lib/mnemonic.dart';
-import '../lib/utils.dart';
+import '../lib/src/mnemonic.dart';
+import '../lib/src/utils.dart';
 
 void main() {
   late Uint8List entropy;

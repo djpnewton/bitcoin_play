@@ -4,7 +4,7 @@ import 'package:crypto/crypto.dart' as crypto;
 
 import 'utils.dart';
 
-final alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+final _alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
 String base58Encode(Uint8List input) {
   var result = '';
@@ -17,7 +17,7 @@ String base58Encode(Uint8List input) {
     // divide input by 58
     inputBigInt = inputBigInt ~/ BigInt.from(58);
     // prepend the character corresponding to the remainder
-    result = alphabet[remainder.toInt()] + result;
+    result = _alphabet[remainder.toInt()] + result;
   }
   // handle leading zeros in the input
   for (var byte in input) {
@@ -38,7 +38,7 @@ Uint8List base58Decode(String input) {
   for (var i = input.length - 1; i >= 0; i--) {
     final char = input[i];
     // find the index (value) of the character in the alphabet
-    final index = alphabet.indexOf(char);
+    final index = _alphabet.indexOf(char);
     if (index == -1) {
       throw FormatException('Invalid character in Base58 string: $char');
     }

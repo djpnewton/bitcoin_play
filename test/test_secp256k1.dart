@@ -2,7 +2,7 @@
 
 import 'package:test/test.dart';
 
-import '../lib/secp256k1.dart';
+import '../lib/src/secp256k1.dart';
 
 void main() {
   test('generator', () {

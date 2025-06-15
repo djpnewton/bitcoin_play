@@ -4,9 +4,9 @@ import 'dart:typed_data';
 
 import 'package:benchmark_runner/benchmark_runner.dart';
 
-import '../lib/utils.dart';
-import '../lib/secp256k1.dart';
-import '../lib/keys.dart';
+import '../lib/src/utils.dart';
+import '../lib/src/secp256k1.dart';
+import '../lib/src/keys.dart';
 
 void main() {
   group('Ripemd160', () {

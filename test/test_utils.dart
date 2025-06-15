@@ -5,7 +5,7 @@ import 'dart:typed_data';
 
 import 'package:test/test.dart';
 
-import '../lib/utils.dart';
+import '../lib/src/utils.dart';
 
 void main() {
   test('bytesToHex() converts bytes to hex string', () {

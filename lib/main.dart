@@ -4,10 +4,10 @@ import 'dart:typed_data';
 
 import 'package:args/command_runner.dart';
 
-import 'common.dart';
-import 'utils.dart';
-import 'mnemonic.dart';
-import 'keys.dart';
+import 'src/common.dart';
+import 'src/utils.dart';
+import 'src/mnemonic.dart';
+import 'src/keys.dart';
 
 class ExampleCommand extends Command<void> {
   @override

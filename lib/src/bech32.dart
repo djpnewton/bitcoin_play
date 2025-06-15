@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'common.dart';
 
-final alphabet = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+final _alphabet = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
 
 Uint8List _hrpExpand(String hrp) {
   final hrpBytes = utf8.encode(hrp);
@@ -194,7 +194,7 @@ String bech32Encode(
   final bech32String = StringBuffer(hrp);
   bech32String.write('1'); // separator
   for (var i = 0; i < bech32Parts.length; i++) {
-    bech32String.write(alphabet[bech32Parts[i]]);
+    bech32String.write(_alphabet[bech32Parts[i]]);
   }
   return bech32String.toString();
 }
@@ -215,7 +215,7 @@ Uint8List bech32Decode(String input) {
   // convert data to 5-bit values
   final data5Bit = Uint8List(data.length);
   for (var i = 0; i < data.length; i++) {
-    final index = alphabet.indexOf(data[i]);
+    final index = _alphabet.indexOf(data[i]);
     if (index == -1) {
       throw ArgumentError('Invalid character in Bech32 input: ${data[i]}');
     }

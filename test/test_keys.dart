@@ -5,11 +5,11 @@ import 'dart:typed_data';
 import 'package:bip39/bip39.dart';
 import 'package:test/test.dart';
 
-import '../lib/keys.dart';
-import '../lib/utils.dart';
-import '../lib/common.dart';
-import '../lib/wif.dart';
-import '../lib/base58.dart';
+import '../lib/src/keys.dart';
+import '../lib/src/utils.dart';
+import '../lib/src/common.dart';
+import '../lib/src/wif.dart';
+import '../lib/src/base58.dart';
 
 void main() {
   late Uint8List seed;

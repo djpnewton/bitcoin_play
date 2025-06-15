@@ -2,9 +2,9 @@
 
 import 'package:test/test.dart';
 
-import '../lib/common.dart';
-import '../lib/bech32.dart';
-import '../lib/utils.dart';
+import '../lib/src/common.dart';
+import '../lib/src/bech32.dart';
+import '../lib/src/utils.dart';
 
 void main() {
   test('bech32Encode()', () {

@@ -2,9 +2,9 @@
 
 import 'package:test/test.dart';
 
-import '../lib/utils.dart';
-import '../lib/common.dart';
-import '../lib/address.dart';
+import '../lib/src/utils.dart';
+import '../lib/src/common.dart';
+import '../lib/src/address.dart';
 
 void main() {
   test('p2pkhAddress() creates a P2PKH address', () {
