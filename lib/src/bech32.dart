@@ -3,6 +3,12 @@ import 'dart:typed_data';
 
 import 'common.dart';
 
+class Bech32 {
+  Uint8List scriptPubKey;
+  Network network;
+  Bech32(this.scriptPubKey, this.network);
+}
+
 final _alphabet = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
 
 Uint8List _hrpExpand(String hrp) {
@@ -165,14 +171,17 @@ String bech32Encode(
   // get the witness version
   final version = scriptPubKey[0];
   // witness version should be between OP_0 and OP_16
-  if (version != 0 && (version < 0x51 && version > 0x60)) {
+  if (version != 0 && (version < 0x51 || version > 0x60)) {
     throw ArgumentError('Invalid witness version: $version');
   }
   // get the witness size
   final size = scriptPubKey[1];
   // size should be 20 bytes (public key hash - P2WPKH, script hash - P2WSH) or 32 bytes (tweaked public key - P2TR)
-  if (size != 20 && size != 32) {
-    throw ArgumentError('Invalid witness size: $size');
+  if (version == 0 && size != 20 && size != 32) {
+    throw ArgumentError('Invalid witness size: $size (expected 20 or 32)');
+  }
+  if (version == 0x51 && size != 32) {
+    throw ArgumentError('Invalid witness size: $size (expected 32)');
   }
   // check sciptPubKey length
   if (scriptPubKey.length != size + 2) {
@@ -199,7 +208,7 @@ String bech32Encode(
   return bech32String.toString();
 }
 
-Uint8List bech32Decode(String input) {
+Bech32 bech32Decode(String input) {
   // split input into human readable part (hrp) and data part
   final oneIndex = input.lastIndexOf('1');
   if (oneIndex == -1) {
@@ -210,6 +219,13 @@ Uint8List bech32Decode(String input) {
   }
   final hrp = input.substring(0, oneIndex);
   final data = input.substring(oneIndex + 1);
+  // get the network based on hrp
+  final network = switch (hrp) {
+    'bc' => Network.mainnet,
+    'tb' => Network.testnet,
+    'bcrt' => Network.regtest,
+    _ => throw ArgumentError('Invalid Bech32 human readable part: $hrp'),
+  };
   // expand hrp to 5-bit groups
   final hrpExpanded = _hrpExpand(hrp);
   // convert data to 5-bit values
@@ -247,15 +263,23 @@ Uint8List bech32Decode(String input) {
   // convert witness program back to 8-bit values
   final witnessProgram8Bit = _convert5BitTo8Bit(witnessProgram5Bit);
   // check witness program length
-  if (witnessProgram8Bit.length != 20 && witnessProgram8Bit.length != 32) {
+  if (version == 0 &&
+      witnessProgram8Bit.length != 20 &&
+      witnessProgram8Bit.length != 32) {
+    throw ArgumentError(
+      'Invalid witness program length: ${witnessProgram8Bit.length}',
+    );
+  }
+  if (version == 1 && witnessProgram8Bit.length != 32) {
     throw ArgumentError(
       'Invalid witness program length: ${witnessProgram8Bit.length}',
     );
   }
   // combine version, witness program length, and witness program
-  return Uint8List.fromList([
+  final scriptPubKey = Uint8List.fromList([
     opcode,
     witnessProgram8Bit.length,
     ...witnessProgram8Bit,
   ]);
+  return Bech32(scriptPubKey, network);
 }

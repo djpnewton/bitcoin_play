@@ -78,20 +78,25 @@ void main() {
       () => bech32Encode(scriptPubKey, network: Network.mainnet),
       throwsArgumentError,
     );
+    scriptPubKey = hexToBytes('01145a9bfcdccd086dee2c26f490341589e97194845a');
+    expect(
+      () => bech32Encode(scriptPubKey, network: Network.mainnet),
+      throwsArgumentError,
+    );
   });
   test('bech32Decode()', () {
     // P2WPKH address example
     var address = 'bc1qt2dlehxdppk7utpx7jgrg9vfa9cefpz6wyrlka';
-    var scriptPubKey = bech32Decode(address);
+    var beck32 = bech32Decode(address);
     expect(
-      scriptPubKey,
+      beck32.scriptPubKey,
       equals(hexToBytes('00145a9bfcdccd086dee2c26f490341589e97194845a')),
     );
     // P2WSH address example
     address = 'bc1quh5tu7twuys7uqmu7s53zuc35nea3y7uhfjqndqnsgfjnyjyzspqcv0zsz';
-    scriptPubKey = bech32Decode(address);
+    beck32 = bech32Decode(address);
     expect(
-      scriptPubKey,
+      beck32.scriptPubKey,
       equals(
         hexToBytes(
           '0020e5e8be796ee121ee037cf429117311a4f3d893dcba6409b41382132992441402',
@@ -100,9 +105,9 @@ void main() {
     );
     // P2TR address example
     address = 'bc1phcunsk5eplkay2jwmryppenrvaa2l2f3slpd4l4uvhwd2x2mvcxqdkw80s';
-    scriptPubKey = bech32Decode(address);
+    beck32 = bech32Decode(address);
     expect(
-      scriptPubKey,
+      beck32.scriptPubKey,
       equals(
         hexToBytes(
           '5120be39385a990fedd22a4ed8c810e663677aafa93187c2dafebc65dcd5195b660c',
