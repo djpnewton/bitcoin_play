@@ -1,11 +1,11 @@
 import 'dart:typed_data';
-import 'dart:io';
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:cryptography/cryptography.dart' as cryptography;
 
 import 'utils.dart';
+import 'wordlist.dart';
 
 Future<String> mnemonicToSeed(String mnemonic, {String passphrase = ''}) async {
   assert(mnemonic.isNotEmpty, 'Mnemonic must not be empty');
@@ -39,10 +39,6 @@ int _checksumBit(int i, List<int> checksum) {
 
 bool mnemonicValid(String mnemonic) {
   assert(mnemonic.isNotEmpty, 'Mnemonic must not be empty');
-
-  // read wordlist.txt to get the mnemonic words
-  final wordlist = File('wordlist.txt').readAsLinesSync();
-
   // create a bigint from the mnemonic words
   var bigint = BigInt.zero;
   final words = mnemonic.split(' ');
@@ -50,7 +46,7 @@ bool mnemonicValid(String mnemonic) {
   for (final word in words) {
     if (word.isEmpty) return false; // empty word in mnemonic
     // find the index of the word in the wordlist
-    final wordIndex = wordlist.indexOf(word);
+    final wordIndex = wordList.indexOf(word);
     if (wordIndex == -1) return false; // Invalid word in mnemonic
     if (firstWord) {
       firstWord = false;
@@ -104,8 +100,6 @@ String mnemonicFromEntropy(Uint8List entropy) {
     bigint = (bigint << 1) + BigInt.from(checksumBit);
   }
 
-  // read wordlist.txt to get the mnemonic words
-  final wordlist = File('wordlist.txt').readAsLinesSync();
   // calculate the number of words needed
   final numWords = (entropy.length * 8 + checksumBitCount) ~/ 11;
   // create a list to hold the mnemonic words
@@ -114,7 +108,7 @@ String mnemonicFromEntropy(Uint8List entropy) {
     // get the index of the word in the wordlist
     final wordIndex = bigint & BigInt.from(2047); // bit mask last 11 bits
     // add the word to the mnemonic words list
-    mnemonicWords.insert(0, wordlist[wordIndex.toInt()]);
+    mnemonicWords.insert(0, wordList[wordIndex.toInt()]);
     // shift the bigint right by 11 bits for the next word
     bigint >>= 11;
   }
