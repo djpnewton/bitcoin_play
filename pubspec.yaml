@@ -9,7 +9,6 @@ dependencies:
   args: ^2.7.0
   crypto: ^3.0.6
   cryptography: ^2.7.0
-  hashlib: ^2.0.0
 
 dev_dependencies:
   lints: ^6.0.0

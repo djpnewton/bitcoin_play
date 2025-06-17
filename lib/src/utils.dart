@@ -2,7 +2,8 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart' as crypto;
-import 'package:hashlib/hashlib.dart' as hashlib;
+
+import 'ripemd160.dart';
 
 String bytesToHex(Uint8List bytes) {
   BigInt value = bytesToBigInt(bytes);
@@ -71,12 +72,6 @@ bool listEquals<T>(List<T>? a, List<T>? b) {
     }
   }
   return true;
-}
-
-Uint8List ripemd160(Uint8List data) {
-  final ripemd160 = hashlib.ripemd160;
-  final hash = ripemd160.convert(data);
-  return Uint8List.fromList(hash.bytes);
 }
 
 Uint8List sha256(Uint8List data) {
