@@ -438,12 +438,11 @@ class PrivateKey extends PublicKey {
 
   Uint8List _intToKey(BigInt value) {
     // Convert a BigInt to a 32-byte private key
-    final bytes = bigIntToBytes(value);
+    final bytes = bigIntToBytes(value, minLength: 32);
     if (bytes.length > 32) {
       throw ArgumentError('Value is too large for a private key');
     }
-    // Pad with leading zeros to make it 32 bytes
-    return Uint8List.fromList(List<int>.filled(32 - bytes.length, 0) + bytes);
+    return bytes;
   }
 
   PrivateKey childPrivateKey(int index, {bool hardened = true}) {

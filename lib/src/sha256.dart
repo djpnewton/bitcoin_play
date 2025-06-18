@@ -1,4 +1,3 @@
-// dart format off
 import 'dart:typed_data';
 
 class State {
@@ -16,6 +15,9 @@ class State {
   }
 }
 
+const int _maxInt32 = 0xFFFFFFFF;
+
+// dart format off
 const _k = [
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -55,7 +57,7 @@ State _initializeState() {
 }
 
 int _rotateRight(int x, int n) {
-  return (x >> n) | (x << (32 - n)) & 0xFFFFFFFF;
+  return (x >> n) | (x << (32 - n)) & _maxInt32;
 }
 
 int _sigma0(int x) {
@@ -66,11 +68,11 @@ int _sigma1(int x) {
   return _rotateRight(x, 17) ^ _rotateRight(x, 19) ^ (x >> 10);
 }
 
-int _capsigma0(int x) {
+int _sum0(int x) {
   return _rotateRight(x, 2) ^ _rotateRight(x, 13) ^ _rotateRight(x, 22);
 }
 
-int _capsigma1(int x) {
+int _sum1(int x) {
   return _rotateRight(x, 6) ^ _rotateRight(x, 11) ^ _rotateRight(x, 25);
 }
 
@@ -93,7 +95,7 @@ State _processBlock(Uint8List block, State state) {
     final term2 = w[i - 7];
     final term3 = _sigma0(w[i - 15]);
     final term4 = w[i - 16];
-    w[i] = (term1 + term2 + term3 + term4) & 0xFFFFFFFF;
+    w[i] = (term1 + term2 + term3 + term4) & _maxInt32;
   }
 
   // initialize working variables
@@ -108,29 +110,28 @@ State _processBlock(Uint8List block, State state) {
 
   // main loop
   for (var i = 0; i < 64; i++) {
-    final term1 =
-        (h + _capsigma1(e) + _ch(e, f, g) + _k[i] + w[i]) & 0xFFFFFFFF;
-    final term2 = (_capsigma0(a) + _maj(a, b, c)) & 0xFFFFFFFF;
+    final term1 = (h + _sum1(e) + _ch(e, f, g) + _k[i] + w[i]) & _maxInt32;
+    final term2 = (_sum0(a) + _maj(a, b, c)) & _maxInt32;
 
     h = g;
     g = f;
     f = e;
-    e = (d + term1) & 0xFFFFFFFF;
+    e = (d + term1) & _maxInt32;
     d = c;
     c = b;
     b = a;
-    a = (term1 + term2) & 0xFFFFFFFF;
+    a = (term1 + term2) & _maxInt32;
   }
 
   // intermediate hash value
-  state.h0 = (state.h0 + a) & 0xFFFFFFFF;
-  state.h1 = (state.h1 + b) & 0xFFFFFFFF;
-  state.h2 = (state.h2 + c) & 0xFFFFFFFF;
-  state.h3 = (state.h3 + d) & 0xFFFFFFFF;
-  state.h4 = (state.h4 + e) & 0xFFFFFFFF;
-  state.h5 = (state.h5 + f) & 0xFFFFFFFF;
-  state.h6 = (state.h6 + g) & 0xFFFFFFFF;
-  state.h7 = (state.h7 + h) & 0xFFFFFFFF;
+  state.h0 = (state.h0 + a) & _maxInt32;
+  state.h1 = (state.h1 + b) & _maxInt32;
+  state.h2 = (state.h2 + c) & _maxInt32;
+  state.h3 = (state.h3 + d) & _maxInt32;
+  state.h4 = (state.h4 + e) & _maxInt32;
+  state.h5 = (state.h5 + f) & _maxInt32;
+  state.h6 = (state.h6 + g) & _maxInt32;
+  state.h7 = (state.h7 + h) & _maxInt32;
 
   return state;
 }

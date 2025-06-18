@@ -46,11 +46,22 @@ BigInt bytesToBigInt(Uint8List bytes) {
   return result;
 }
 
-Uint8List bigIntToBytes(BigInt value) {
+Uint8List bigIntToBytes(BigInt value, {int? minLength}) {
+  if (minLength != null && minLength < 0) {
+    throw ArgumentError('Length must be non-negative');
+  }
+  if (value < BigInt.zero) {
+    throw ArgumentError('Value must be non-negative');
+  }
   final byteList = <int>[];
   while (value > BigInt.zero) {
     byteList.add((value & BigInt.from(0xFF)).toInt());
     value >>= 8;
+  }
+  if (minLength != null) {
+    while (byteList.length < minLength) {
+      byteList.add(0);
+    }
   }
   return Uint8List.fromList(byteList.reversed.toList());
 }

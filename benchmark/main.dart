@@ -7,6 +7,7 @@ import 'package:benchmark_runner/benchmark_runner.dart';
 import '../lib/src/utils.dart';
 import '../lib/src/ripemd160.dart';
 import '../lib/src/sha256.dart';
+import '../lib/src/sha512.dart';
 import '../lib/src/secp256k1.dart';
 import '../lib/src/keys.dart';
 
@@ -37,6 +38,20 @@ void main() {
     data = Uint8List.fromList(List.filled(1000, 255));
     benchmark('1000 bytes all 255', () {
       sha256(data);
+    });
+  });
+  group('Sha512', () {
+    var data = Uint8List.fromList(List.generate(1000, (index) => index % 256));
+    benchmark('1000 bytes values 0->255', () {
+      sha512(data);
+    });
+    data = Uint8List.fromList(List.filled(1000, 0));
+    benchmark('1000 bytes all zeros', () {
+      sha512(data);
+    });
+    data = Uint8List.fromList(List.filled(1000, 255));
+    benchmark('1000 bytes all 255', () {
+      sha512(data);
     });
   });
   group('secp256k1', () {
