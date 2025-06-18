@@ -1,7 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart' as crypto;
-
 import 'utils.dart';
 
 final _alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -77,10 +75,7 @@ Uint8List base58DecodeCheck(String input) {
   final data = decoded.sublist(0, decoded.length - 4);
   final checksum = decoded.sublist(decoded.length - 4);
   // calculate the expected checksum
-  final expectedChecksum = crypto.sha256
-      .convert(crypto.sha256.convert(data).bytes)
-      .bytes
-      .sublist(0, 4);
+  final expectedChecksum = hash256(data).sublist(0, 4);
   // compare the checksums
   if (!listEquals(checksum, expectedChecksum)) {
     throw FormatException('Invalid checksum in Base58 string');

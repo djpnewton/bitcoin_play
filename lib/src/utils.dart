@@ -1,9 +1,8 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart' as crypto;
-
 import 'ripemd160.dart';
+import 'sha256.dart';
 
 String bytesToHex(Uint8List bytes) {
   BigInt value = bytesToBigInt(bytes);
@@ -72,12 +71,6 @@ bool listEquals<T>(List<T>? a, List<T>? b) {
     }
   }
   return true;
-}
-
-Uint8List sha256(Uint8List data) {
-  final sha256 = crypto.sha256;
-  final hash = sha256.convert(data);
-  return Uint8List.fromList(hash.bytes);
 }
 
 /// compute the hash256 (ie SHA-256(SHA-256(data))) of the input data

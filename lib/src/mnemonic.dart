@@ -1,11 +1,11 @@
 import 'dart:typed_data';
 import 'dart:convert';
 
-import 'package:crypto/crypto.dart' as crypto;
 import 'package:cryptography/cryptography.dart' as cryptography;
 
 import 'utils.dart';
 import 'wordlist.dart';
+import 'sha256.dart';
 
 Future<String> mnemonicToSeed(String mnemonic, {String passphrase = ''}) async {
   assert(mnemonic.isNotEmpty, 'Mnemonic must not be empty');
@@ -68,7 +68,7 @@ bool mnemonicValid(String mnemonic) {
 
   // calculate the expected checksum from the original mnemonic
   final entropy = bigIntToBytes(bigint);
-  final checksum = crypto.sha256.convert(entropy).bytes;
+  final checksum = sha256(entropy);
   // compare the checksum bits with the expected checksum bits
   for (var i = 0; i < checksumBitCount; i++) {
     final expectedBit = _checksumBit(i, checksum);
@@ -90,7 +90,7 @@ String mnemonicFromEntropy(Uint8List entropy) {
 
   // create checksum
   final checksumBitCount = entropy.length ~/ 4;
-  final checksum = crypto.sha256.convert(entropy).bytes;
+  final checksum = sha256(entropy);
 
   // append checksum to the end of the entropy
   for (var i = 0; i < checksumBitCount; i++) {

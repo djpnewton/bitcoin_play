@@ -6,6 +6,7 @@ import 'package:benchmark_runner/benchmark_runner.dart';
 
 import '../lib/src/utils.dart';
 import '../lib/src/ripemd160.dart';
+import '../lib/src/sha256.dart';
 import '../lib/src/secp256k1.dart';
 import '../lib/src/keys.dart';
 
