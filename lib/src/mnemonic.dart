@@ -1,28 +1,24 @@
 import 'dart:typed_data';
 import 'dart:convert';
 
-import 'package:cryptography/cryptography.dart' as cryptography;
-
 import 'utils.dart';
 import 'wordlist.dart';
 import 'sha256.dart';
+import 'pbkdf2.dart';
 
 Future<String> mnemonicToSeed(String mnemonic, {String passphrase = ''}) async {
   assert(mnemonic.isNotEmpty, 'Mnemonic must not be empty');
-
   // use pbkdf2 to generate a seed from the mnemonic
-  final pbkdf2 = cryptography.Pbkdf2(
-    bits: 512,
-    iterations: 2048,
-    macAlgorithm: cryptography.Hmac.sha512(),
-  );
-  final salt = 'mnemonic$passphrase';
-  // Convert the mnemonic to bytes
   final mnemonicBytes = utf8.encode(mnemonic);
-  final secretKey = cryptography.SecretKey(mnemonicBytes);
-  final nonce = utf8.encode(salt);
-  final key = await pbkdf2.deriveKey(secretKey: secretKey, nonce: nonce);
-  return bytesToHex(Uint8List.fromList(await key.extractBytes()));
+  final salt = 'mnemonic$passphrase';
+  final key = pbkdf2(
+    MacAlgorithm.hmacSha512,
+    mnemonicBytes,
+    utf8.encode(salt),
+    iterations: 2048,
+    bits: 512,
+  );
+  return bytesToHex(key);
 }
 
 int _checksumBit(int i, List<int> checksum) {
