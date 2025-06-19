@@ -38,7 +38,16 @@ Uint8List _padData(Uint8List input) {
   while ((data.length + 8) % 64 != 0) {
     data.addByte(0x00);
   }
-  data.add(Uint8List(8)..buffer.asByteData().setUint64(0, length, Endian.big));
+  // cant use setUint64 because it is not available in dart2js
+  final lengthUpper = length >> 32;
+  final lengthLower = length & _maxInt32;
+  data.add(
+    Uint8List(4)..buffer.asByteData().setUint32(0, lengthUpper, Endian.big),
+  );
+  data.add(
+    Uint8List(4)..buffer.asByteData().setUint32(0, lengthLower, Endian.big),
+  );
+
   assert(data.length % 64 == 0);
   return data.toBytes();
 }
