@@ -161,14 +161,14 @@ State _processBlock(Uint8List block, State state) {
 
 Uint8List _finalHash(State state) {
   return Uint8List.fromList([
-    ...bigIntToBytes(state.h0),
-    ...bigIntToBytes(state.h1),
-    ...bigIntToBytes(state.h2),
-    ...bigIntToBytes(state.h3),
-    ...bigIntToBytes(state.h4),
-    ...bigIntToBytes(state.h5),
-    ...bigIntToBytes(state.h6),
-    ...bigIntToBytes(state.h7),
+    ...bigIntToBytes(state.h0, minLength: 8),
+    ...bigIntToBytes(state.h1, minLength: 8),
+    ...bigIntToBytes(state.h2, minLength: 8),
+    ...bigIntToBytes(state.h3, minLength: 8),
+    ...bigIntToBytes(state.h4, minLength: 8),
+    ...bigIntToBytes(state.h5, minLength: 8),
+    ...bigIntToBytes(state.h6, minLength: 8),
+    ...bigIntToBytes(state.h7, minLength: 8),
   ]);
 }
 

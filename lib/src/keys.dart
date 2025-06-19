@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart' as crypto;
-
 import 'secp256k1.dart';
 import 'utils.dart';
 import 'base58.dart';
 import 'common.dart';
 import 'address.dart';
+import 'hmac.dart';
 
 const _prefixDict = {
   'xprv': '0488ade4', // Mainnet - P2PKH or P2SH  - m/44'/0'
@@ -233,11 +232,10 @@ class PublicKey {
     final hexData =
         bytesToHex(publicKey) + index.toRadixString(16).padLeft(8, '0');
     final data = hexToBytes(hexData); // parent pubkey + 4 byte index
-    final hmac = crypto.Hmac(crypto.sha512, chainCode);
-    final digest = hmac.convert(data);
+    final digest = hmac(Hash.sha512, chainCode, data);
     // The first 32 bytes are the child public key input, the next 32 bytes are the chain code
-    final publicKeyInput = Uint8List.fromList(digest.bytes.sublist(0, 32));
-    final childChainCode = Uint8List.fromList(digest.bytes.sublist(32, 64));
+    final publicKeyInput = Uint8List.fromList(digest.sublist(0, 32));
+    final childChainCode = Uint8List.fromList(digest.sublist(32, 64));
     // calculate the child public key
     final childPublicKeyPoint = _pointFromData(
       publicKeyInput,
@@ -347,11 +345,10 @@ class PrivateKey extends PublicKey {
     ScriptType defaultScriptType = ScriptType.p2pkh,
   }) {
     // hmac sha512 seed with 'Bitcoin seed' to get the master key
-    final hmac = crypto.Hmac(crypto.sha512, utf8.encode('Bitcoin seed'));
-    final digest = hmac.convert(seed);
+    final digest = hmac(Hash.sha512, utf8.encode('Bitcoin seed'), seed);
     // The first 32 bytes are the private key, the next 32 bytes are the chain code
-    final privateKey = Uint8List.fromList(digest.bytes.sublist(0, 32));
-    final chainCode = Uint8List.fromList(digest.bytes.sublist(32, 64));
+    final privateKey = Uint8List.fromList(digest.sublist(0, 32));
+    final chainCode = Uint8List.fromList(digest.sublist(32, 64));
     // The public key is derived from the private key using secp256k1
     final publicKey = pubkeyFromPrivateKey(privateKey);
     return PrivateKey(
@@ -466,11 +463,10 @@ class PrivateKey extends PublicKey {
         : hexToBytes(
             bytesToHex(publicKey) + index.toRadixString(16).padLeft(8, '0'),
           ); // master pubkey + 4 byte index
-    final hmac = crypto.Hmac(crypto.sha512, chainCode);
-    final digest = hmac.convert(data);
+    final digest = hmac(Hash.sha512, chainCode, data);
     // The first 32 bytes are the child private key input, the next 32 bytes are the chain code
-    final privateKeyInput = Uint8List.fromList(digest.bytes.sublist(0, 32));
-    final childChainCode = Uint8List.fromList(digest.bytes.sublist(32, 64));
+    final privateKeyInput = Uint8List.fromList(digest.sublist(0, 32));
+    final childChainCode = Uint8List.fromList(digest.sublist(32, 64));
     // calculate the child private key
     final childPrivateKeyInt =
         (bytesToBigInt(privateKeyInput) + bytesToBigInt(privateKey)) %
