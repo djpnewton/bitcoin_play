@@ -15,14 +15,14 @@ class ExampleCommand extends Command<void> {
   ExampleCommand();
 
   @override
-  void run() async {
+  void run() {
     final mnemonic =
         'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
     print('Mnemonic words: $mnemonic');
 
     print('Validating mnemonic: ${mnemonicValid(mnemonic)}');
 
-    final seed = await mnemonicToSeed(mnemonic);
+    final seed = mnemonicToSeed(mnemonic);
     print('Seed (hex): $seed');
 
     final masterKey = PrivateKey.fromSeed(hexToBytes(seed));
@@ -98,7 +98,7 @@ class ExampleCommand extends Command<void> {
   }
 }
 
-void main(List<String> args) async {
+void main(List<String> args) {
   CommandRunner<void>(
       'dartcoin',
       'A command line interface for the dartcoin library.',

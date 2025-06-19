@@ -14,13 +14,13 @@ import '../lib/src/base58.dart';
 void main() {
   late Uint8List seed;
   late PrivateKey masterKey;
-  setUp(() async {
+  setUp(() {
     seed = mnemonicToSeed(
       'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
     );
     masterKey = PrivateKey.fromSeed(seed);
   });
-  tearDown(() async {});
+  tearDown(() {});
   test('PrivateKey.fromSeed() generates master key from seed', () {
     expect(masterKey.depth, equals(0));
     expect(masterKey.parentFingerprint, equals(0));

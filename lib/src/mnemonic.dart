@@ -6,7 +6,7 @@ import 'wordlist.dart';
 import 'sha256.dart';
 import 'pbkdf2.dart';
 
-Future<String> mnemonicToSeed(String mnemonic, {String passphrase = ''}) async {
+String mnemonicToSeed(String mnemonic, {String passphrase = ''}) {
   assert(mnemonic.isNotEmpty, 'Mnemonic must not be empty');
   // use pbkdf2 to generate a seed from the mnemonic
   final mnemonicBytes = utf8.encode(mnemonic);
