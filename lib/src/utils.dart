@@ -115,7 +115,8 @@ Uint8List compactSize(int x) {
       (x >> 16) & 0xFF,
       (x >> 24) & 0xFF,
     ]);
-  } else if (x <= 0x7FFFFFFFFFFFFFFF) {
+    // convert to BigInt for javascript compatibility
+  } else if (BigInt.from(x) <= BigInt.parse('0x7FFFFFFFFFFFFFFF')) {
     return Uint8List.fromList([
       0xFF,
       x & 0xFF,
