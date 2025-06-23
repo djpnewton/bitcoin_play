@@ -51,7 +51,7 @@ class Secp256k1Point {
   Secp256k1Point double() {
     // slope = (3x² + a) / 2y
     final slope =
-        ((BigInt.from(3) * x.pow(2) + a) * _inverse((BigInt.two * y), p));
+        ((BigInt.from(3) * x.pow(2) + a) * modInverse((BigInt.two * y), p));
 
     // xNew = slope² - 2x
     final xNew = (slope.pow(2) - (BigInt.two * x)) % p;
@@ -67,7 +67,7 @@ class Secp256k1Point {
     if (this == other) return double();
 
     // slope = (y1 - y2) / (x1 - x2)
-    final slope = ((y - other.y) * _inverse((x - other.x), p)) % p;
+    final slope = ((y - other.y) * modInverse((x - other.x), p)) % p;
 
     // xNew = slope² - x1 - x2
     final xNew = (slope.pow(2) - x - other.x) % p;
@@ -106,7 +106,7 @@ class Secp256k1Point {
   }
 }
 
-BigInt _inverse(BigInt a, BigInt modulus) {
+BigInt modInverse(BigInt a, BigInt modulus) {
   // extended Euclidean algorithm to find the modular inverse
   BigInt modulusOriginal = modulus;
 

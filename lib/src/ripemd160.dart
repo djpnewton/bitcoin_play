@@ -2,15 +2,15 @@
 
 import 'dart:typed_data';
 
-class State {
+class _State {
   int h0;
   int h1;
   int h2;
   int h3;
   int h4;
-  State(this.h0, this.h1, this.h2, this.h3, this.h4);
-  State clone() {
-    return State(h0, h1, h2, h3, h4);
+  _State(this.h0, this.h1, this.h2, this.h3, this.h4);
+  _State clone() {
+    return _State(h0, h1, h2, h3, h4);
   }
 
   @override
@@ -89,7 +89,7 @@ int _f(int round, int x, int y, int z) {
   }
 }
 
-State _compress(State state, Uint8List block) {
+_State _compress(_State state, Uint8List block) {
   final lp = state.clone();
   final rp = state.clone();
   final x = List<int>.generate(16, (i) {
@@ -124,7 +124,7 @@ State _compress(State state, Uint8List block) {
     rp.h3 = _rol(tmp.h2, 10);
     rp.h4 = tmp.h3;
   }
-  return State(
+  return _State(
     state.h1 + lp.h2 + rp.h3,
     state.h2 + lp.h3 + rp.h4,
     state.h3 + lp.h4 + rp.h0,
@@ -135,7 +135,13 @@ State _compress(State state, Uint8List block) {
 
 Uint8List ripemd160(Uint8List input) {
   // initialize state
-  var state = State(0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0);
+  var state = _State(
+    0x67452301,
+    0xefcdab89,
+    0x98badcfe,
+    0x10325476,
+    0xc3d2e1f0,
+  );
   // process the input in (full) 64-byte blocks
   for (var i = 0; i < input.length >> 6; i++) {
     final block = input.sublist(i * 64, (i + 1) * 64);

@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-class State {
+class _State {
   int h0;
   int h1;
   int h2;
@@ -9,9 +9,18 @@ class State {
   int h5;
   int h6;
   int h7;
-  State(this.h0, this.h1, this.h2, this.h3, this.h4, this.h5, this.h6, this.h7);
-  State clone() {
-    return State(h0, h1, h2, h3, h4, h5, h6, h7);
+  _State(
+    this.h0,
+    this.h1,
+    this.h2,
+    this.h3,
+    this.h4,
+    this.h5,
+    this.h6,
+    this.h7,
+  );
+  _State clone() {
+    return _State(h0, h1, h2, h3, h4, h5, h6, h7);
   }
 }
 
@@ -52,8 +61,8 @@ Uint8List _padData(Uint8List input) {
   return data.toBytes();
 }
 
-State _initializeState() {
-  return State(
+_State _initializeState() {
+  return _State(
     0x6a09e667, // h0
     0xbb67ae85, // h1
     0x3c6ef372, // h2
@@ -93,7 +102,7 @@ int _maj(int x, int y, int z) {
   return (x & y) ^ (x & z) ^ (y & z);
 }
 
-State _processBlock(Uint8List block, State state) {
+_State _processBlock(Uint8List block, _State state) {
   // prepare the message schedule
   final w = List<int>.filled(64, 0);
   for (var i = 0; i < 16; i++) {
@@ -145,7 +154,7 @@ State _processBlock(Uint8List block, State state) {
   return state;
 }
 
-Uint8List _finalHash(State state) {
+Uint8List _finalHash(_State state) {
   final hash = Uint8List(32);
   hash.buffer.asByteData().setUint32(0, state.h0, Endian.big);
   hash.buffer.asByteData().setUint32(4, state.h1, Endian.big);

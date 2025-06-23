@@ -7,6 +7,7 @@ import 'base58.dart';
 import 'common.dart';
 import 'address.dart';
 import 'hmac.dart';
+import 'wif.dart';
 
 const _prefixDict = {
   'xprv': '0488ade4', // Mainnet - P2PKH or P2SH  - m/44'/0'
@@ -104,6 +105,8 @@ class PublicKey {
   // The public key and chain code
   Uint8List publicKey;
   Uint8List chainCode;
+  // extended or basic public key
+  bool extended;
 
   Network defaultNetwork;
   ScriptType defaultScriptType;
@@ -116,7 +119,18 @@ class PublicKey {
     this.chainCode, {
     this.defaultNetwork = Network.mainnet,
     this.defaultScriptType = ScriptType.p2pkh,
+    this.extended = true,
   });
+
+  PublicKey.basic(
+    this.publicKey, {
+    this.defaultNetwork = Network.mainnet,
+    this.defaultScriptType = ScriptType.p2pkh,
+  }) : depth = 0,
+       parentFingerprint = 0,
+       childNumber = 0,
+       chainCode = Uint8List(0),
+       extended = false;
 
   factory PublicKey.fromXPub(String xpub) {
     // Parse the xpub string and return a PublicKey object
@@ -190,6 +204,42 @@ class PublicKey {
     );
   }
 
+  factory PublicKey.fromPublicKey(
+    Uint8List publicKey, {
+    Network defaultNetwork = Network.mainnet,
+    ScriptType defaultScriptType = ScriptType.p2pkh,
+  }) {
+    return PublicKey.basic(
+      publicKeyToCompressed(publicKey),
+      defaultNetwork: defaultNetwork,
+      defaultScriptType: defaultScriptType,
+    );
+  }
+
+  factory PublicKey.fromPoint(
+    Secp256k1Point point, {
+    Network defaultNetwork = Network.mainnet,
+    ScriptType defaultScriptType = ScriptType.p2pkh,
+  }) {
+    // Convert the point to a compressed public key
+    final publicKey = pubkeyFromPoint(point);
+    return PublicKey.basic(
+      publicKey,
+      defaultNetwork: defaultNetwork,
+      defaultScriptType: defaultScriptType,
+    );
+  }
+
+  static Uint8List pubkeyFromPoint(Secp256k1Point point) {
+    // Convert the point to bytes (compressed format)
+    final x = point.x.toRadixString(16).padLeft(64, '0');
+    // Compressed public key format: 0x02 or 0x03 + x
+    final prefix = yParityToPubkeyPrefix(
+      point.y.isEven ? YParity.even : YParity.odd,
+    );
+    return Uint8List.fromList(hexToBytes(prefix + x));
+  }
+
   static Secp256k1Point _pointFromData(Uint8List data) {
     assert(data.length == 32, 'data must be 32 bytes long');
     // Derive the point from the data using secp256k1
@@ -216,12 +266,18 @@ class PublicKey {
   }
 
   int fingerprint() {
+    if (!extended) {
+      throw StateError('Cannot calculate fingerprint for basic public key');
+    }
     // fingerprint is the first 4 bytes of the hash160 of the public key
     final hash = hash160(publicKey);
     return bytesToBigInt(hash.sublist(0, 4)).toInt();
   }
 
   PublicKey childPublicKey(int index) {
+    if (!extended) {
+      throw StateError('Cannot calculate child key for basic public key');
+    }
     // Check if the index is valid
     if (index < 0 || index > 0x7FFFFFFF) {
       throw ArgumentError(
@@ -259,6 +315,9 @@ class PublicKey {
   }
 
   String xpub({Network? network, ScriptType? scriptType}) {
+    if (!extended) {
+      throw StateError('Cannot calculate xpub for basic public key');
+    }
     // Use the default network and script type if not provided
     network ??= defaultNetwork;
     scriptType ??= defaultScriptType;
@@ -299,16 +358,22 @@ class PublicKey {
     // Use the default network and script type if not provided
     network ??= defaultNetwork;
     scriptType ??= defaultScriptType;
+    /*
     // dont allow master keys to be used for addresses
-    if (depth == 0) {
+    if (extended && depth == 0) {
       throw ArgumentError('Master keys cannot be used for addresses');
     }
+    */
     // Return the address in the specified format
     return switch (scriptType) {
       ScriptType.p2pkh => p2pkhAddress(publicKey, network: network),
       ScriptType.p2shP2wpkh => p2shP2wpkhAddress(publicKey, network: network),
       ScriptType.p2wpkh => p2wpkhAddress(publicKey, network: network),
     };
+  }
+
+  Secp256k1Point point() {
+    return _compressedPublicKeyToPoint(publicKey);
   }
 }
 
@@ -326,16 +391,17 @@ class PrivateKey extends PublicKey {
     super.defaultScriptType,
   });
 
+  PrivateKey.basic(
+    super.publicKey,
+    this.privateKey, {
+    super.defaultNetwork = Network.mainnet,
+    super.defaultScriptType = ScriptType.p2pkh,
+  }) : super.basic();
+
   static Uint8List pubkeyFromPrivateKey(Uint8List privateKey) {
     // Derive the public key from the private key using secp256k1
     final point = PublicKey._pointFromData(privateKey);
-    // Convert the point to bytes (compressed format)
-    final x = point.x.toRadixString(16).padLeft(64, '0');
-    // Compressed public key format: 0x02 or 0x03 + x
-    final prefix = yParityToPubkeyPrefix(
-      point.y.isEven ? YParity.even : YParity.odd,
-    );
-    return Uint8List.fromList(hexToBytes(prefix + x));
+    return PublicKey.pubkeyFromPoint(point);
   }
 
   /// Derive the master key from the seed
@@ -430,6 +496,39 @@ class PrivateKey extends PublicKey {
       privateKey,
       defaultNetwork: network,
       defaultScriptType: scriptType,
+    );
+  }
+
+  factory PrivateKey.fromPrivateKey(
+    Uint8List privateKey, {
+    Network defaultNetwork = Network.mainnet,
+    ScriptType defaultScriptType = ScriptType.p2pkh,
+  }) {
+    // create PrivateKey from a raw private key
+    if (privateKey.length != 32) {
+      throw ArgumentError('Private key must be 32 bytes long');
+    }
+    // The public key is derived from the private key using secp256k1
+    final publicKey = pubkeyFromPrivateKey(privateKey);
+    return PrivateKey.basic(
+      publicKey,
+      privateKey,
+      defaultNetwork: defaultNetwork,
+      defaultScriptType: defaultScriptType,
+    );
+  }
+
+  factory PrivateKey.fromWif(
+    String wifString, {
+    ScriptType defaultScriptType = ScriptType.p2pkh,
+  }) {
+    final wif = Wif.fromWifString(wifString);
+    final pubkey = pubkeyFromPrivateKey(wif.privateKey);
+    return PrivateKey.basic(
+      pubkey,
+      wif.privateKey,
+      defaultNetwork: wif.network,
+      defaultScriptType: defaultScriptType,
     );
   }
 

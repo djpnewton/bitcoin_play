@@ -97,3 +97,38 @@ Uint8List hash160(Uint8List data) {
   final secondHash = ripemd160(firstHash);
   return secondHash;
 }
+
+Uint8List compactSize(int x) {
+  // https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer
+  if (x < 0) {
+    throw ArgumentError('Value must be non-negative');
+  }
+  if (x < 0xFD) {
+    return Uint8List.fromList([x]);
+  } else if (x <= 0xFFFF) {
+    return Uint8List.fromList([0xFD, x & 0xFF, (x >> 8) & 0xFF]);
+  } else if (x <= 0xFFFFFFFF) {
+    return Uint8List.fromList([
+      0xFE,
+      x & 0xFF,
+      (x >> 8) & 0xFF,
+      (x >> 16) & 0xFF,
+      (x >> 24) & 0xFF,
+    ]);
+  } else if (x <= 0x7FFFFFFFFFFFFFFF) {
+    return Uint8List.fromList([
+      0xFF,
+      x & 0xFF,
+      (x >> 8) & 0xFF,
+      (x >> 16) & 0xFF,
+      (x >> 24) & 0xFF,
+      (x >> 32) & 0xFF,
+      (x >> 40) & 0xFF,
+      (x >> 48) & 0xFF,
+      (x >> 56) & 0xFF,
+    ]);
+  } else {
+    // wont get hit as 0x7FFFFFFFFFFFFFFF is the max for a signed 64-bit integer
+    throw ArgumentError('Integer too large for varint encoding: $x');
+  }
+}
