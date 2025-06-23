@@ -2,7 +2,6 @@
 
 import 'dart:typed_data';
 
-import 'package:bip39/bip39.dart';
 import 'package:test/test.dart';
 
 import '../lib/src/keys.dart';
@@ -10,15 +9,16 @@ import '../lib/src/utils.dart';
 import '../lib/src/common.dart';
 import '../lib/src/wif.dart';
 import '../lib/src/base58.dart';
+import '../lib/src/mnemonic.dart';
 
 void main() {
-  late Uint8List seed;
+  late String seed;
   late PrivateKey masterKey;
   setUp(() {
     seed = mnemonicToSeed(
       'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
     );
-    masterKey = PrivateKey.fromSeed(seed);
+    masterKey = PrivateKey.fromSeed(hexToBytes(seed));
   });
   tearDown(() {});
   test('PrivateKey.fromSeed() generates master key from seed', () {

@@ -99,4 +99,19 @@ void main() {
       equals(hexToBytes('d7d5ee7824ff93f94c3055af9382c86c68b5ca92')),
     );
   });
+  test('compactSize() ', () {
+    expect(compactSize(0), equals(Uint8List.fromList([0x00])));
+    expect(compactSize(1), equals(Uint8List.fromList([0x01])));
+    expect(compactSize(253), equals(hexToBytes('fdfd00')));
+    expect(compactSize(65535), equals(hexToBytes('fdffff')));
+    expect(compactSize(65536), equals(hexToBytes('fe00000100')));
+    expect(compactSize(4294967295), equals(hexToBytes('feffffffff')));
+    expect(compactSize(4294967296), equals(hexToBytes('ff0000000001000000')));
+    expect(
+      compactSize(9223372036854775807),
+      equals(hexToBytes('ffffffffffffffff7f')),
+    );
+
+    expect(() => compactSize(-1), throwsArgumentError);
+  });
 }

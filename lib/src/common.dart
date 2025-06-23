@@ -29,3 +29,20 @@ bool isValidPublicKey(Uint8List publicKey) {
   }
   return false;
 }
+
+Uint8List publicKeyToCompressed(Uint8List publicKey) {
+  if (!isValidPublicKey(publicKey)) {
+    throw ArgumentError('Invalid public key format.');
+  }
+  if (publicKey.length == 33) {
+    // already compressed
+    return publicKey;
+  } else if (publicKey.length == 65) {
+    // uncompressed, convert to compressed
+    return Uint8List.fromList([
+      publicKey[64] % 2 == 0 ? 0x02 : 0x03,
+      ...publicKey.sublist(1, 33),
+    ]);
+  }
+  throw ArgumentError('Invalid public key length.');
+}

@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:dartcoin/dartcoin.dart';
 
-class State {
+class _State {
   BigInt h0;
   BigInt h1;
   BigInt h2;
@@ -11,9 +11,18 @@ class State {
   BigInt h5;
   BigInt h6;
   BigInt h7;
-  State(this.h0, this.h1, this.h2, this.h3, this.h4, this.h5, this.h6, this.h7);
-  State clone() {
-    return State(h0, h1, h2, h3, h4, h5, h6, h7);
+  _State(
+    this.h0,
+    this.h1,
+    this.h2,
+    this.h3,
+    this.h4,
+    this.h5,
+    this.h6,
+    this.h7,
+  );
+  _State clone() {
+    return _State(h0, h1, h2, h3, h4, h5, h6, h7);
   }
 }
 
@@ -64,8 +73,8 @@ Uint8List _padData(Uint8List input) {
   return data.toBytes();
 }
 
-State _initializeState() {
-  return State(
+_State _initializeState() {
+  return _State(
     BigInt.parse('6a09e667f3bcc908', radix: 16),
     BigInt.parse('bb67ae8584caa73b', radix: 16),
     BigInt.parse('3c6ef372fe94f82b', radix: 16),
@@ -105,7 +114,7 @@ BigInt _maj(BigInt x, BigInt y, BigInt z) {
   return (x & y) ^ (x & z) ^ (y & z);
 }
 
-State _processBlock(Uint8List block, State state) {
+_State _processBlock(Uint8List block, _State state) {
   // prepare the message schedule
   final w = List<BigInt>.filled(80, BigInt.zero);
   for (var i = 0; i < 16; i++) {
@@ -158,7 +167,7 @@ State _processBlock(Uint8List block, State state) {
   return state;
 }
 
-Uint8List _finalHash(State state) {
+Uint8List _finalHash(_State state) {
   return Uint8List.fromList([
     ...bigIntToBytes(state.h0, minLength: 8),
     ...bigIntToBytes(state.h1, minLength: 8),
