@@ -25,6 +25,14 @@ Uint8List hexToBytes(String hex) {
   return byteList;
 }
 
+extension HexString on String {
+  Uint8List toBytes() => hexToBytes(this);
+}
+
+extension HexUint8List on Uint8List {
+  String toHex() => bytesToHex(this);
+}
+
 Uint8List randomBits(int bits) {
   assert(bits > 0);
   assert(bits % 8 == 0);
@@ -131,5 +139,52 @@ Uint8List compactSize(int x) {
   } else {
     // wont get hit as 0x7FFFFFFFFFFFFFFF is the max for a signed 64-bit integer
     throw ArgumentError('Integer too large for varint encoding: $x');
+  }
+}
+
+class CompactSizeParseResult {
+  final int value;
+  final int bytesRead;
+
+  CompactSizeParseResult(this.value, this.bytesRead);
+}
+
+CompactSizeParseResult compactSizeParse(Uint8List buffer) {
+  if (buffer.isEmpty) {
+    throw FormatException('Buffer is empty');
+  }
+  final firstByte = buffer[0];
+  if (firstByte < 0xFD) {
+    return CompactSizeParseResult(firstByte, 1);
+  } else if (firstByte == 0xFD) {
+    if (buffer.length < 3) {
+      throw FormatException('Buffer too short for compact size');
+    }
+    return CompactSizeParseResult(buffer[1] | (buffer[2] << 8), 3);
+  } else if (firstByte == 0xFE) {
+    if (buffer.length < 5) {
+      throw FormatException('Buffer too short for compact size');
+    }
+    return CompactSizeParseResult(
+      buffer[1] | (buffer[2] << 8) | (buffer[3] << 16) | (buffer[4] << 24),
+      5,
+    );
+  } else if (firstByte == 0xFF) {
+    if (buffer.length < 9) {
+      throw FormatException('Buffer too short for compact size');
+    }
+    return CompactSizeParseResult(
+      buffer[1] |
+          (buffer[2] << 8) |
+          (buffer[3] << 16) |
+          (buffer[4] << 24) |
+          (buffer[5] << 32) |
+          (buffer[6] << 40) |
+          (buffer[7] << 48) |
+          (buffer[8] << 56),
+      9,
+    );
+  } else {
+    throw FormatException('Invalid first byte for compact size: $firstByte');
   }
 }
