@@ -422,11 +422,6 @@ class MessageInv extends Message {
         'Expected ${cspr.value} inventory items, but found ${inventory.length}',
       );
     }
-    if (offset != bytes.length) {
-      throw FormatException(
-        'Extra bytes found after inventory items: ${bytes.length - offset}',
-      );
-    }
     if (inventory.isEmpty) {
       throw FormatException('Inventory cannot be empty');
     }

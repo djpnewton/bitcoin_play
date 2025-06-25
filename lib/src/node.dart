@@ -84,7 +84,6 @@ class Node {
       final socket = await Socket.connect(peer.ip, peer.port);
       connections[peer] = socket;
       _log.info('Connected to peer: ${peer.ip}:${peer.port}');
-      _log.info('Sending version message to peer: ${peer.ip}:${peer.port}');
       final versionBytes = MessageVersion(
         timestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
         remoteAddress: _ipv4ToIpv6(peer.ip),
@@ -96,48 +95,45 @@ class Node {
         lastBlock: 0,
         relay: false,
       ).toBytes(network);
-      _log.info('Version message bytes: ${versionBytes.toHex()}');
+      _log.info('>>>>>: ${peer.ip}:${peer.port}, Version');
       socket.add(versionBytes);
       socket.listen(
         (data) {
           // Handle incoming data
-          _log.info(
-            'Received data from peer: ${peer.ip}:${peer.port}, Data: ${data.toHex()}',
-          );
+          //_log.info('<<<<<: ${peer.ip}:${peer.port}, Data: ${data.toHex()}');
           // check what message type is received
           try {
             final message = Message.fromBytes(data, network);
             if (message is MessageVersion) {
               _log.info(
-                'Received version message from peer: ${peer.ip}:${peer.port}, Version: ${message.version}, User Agent: ${message.userAgent}, Last Block: ${message.lastBlock}',
+                '<<<<<: ${peer.ip}:${peer.port}, Version: ${message.version}, User Agent: ${message.userAgent}, Last Block: ${message.lastBlock}',
               );
-              _log.info(
-                'sending versionack message to peer: ${peer.ip}:${peer.port}',
-              );
+              _log.info('>>>>>: ${peer.ip}:${peer.port}, Verack');
               socket.add(MessageVerack().toBytes(network));
             } else if (message is MessageVerack) {
-              _log.info(
-                'Received versionack message from peer: ${peer.ip}:${peer.port}',
-              );
+              _log.info('<<<<<: ${peer.ip}:${peer.port}, Verack');
             } else if (message is MessagePing) {
               _log.info(
-                'Received ping message from peer: ${peer.ip}:${peer.port}, Nonce: ${message.nonce}',
+                '<<<<<: ${peer.ip}:${peer.port}, Ping: ${message.nonce}',
               );
-              _log.info(
-                'sending pong message to peer: ${peer.ip}:${peer.port}',
-              );
+              _log.info('>>>>>: ${peer.ip}:${peer.port}, Pong');
               socket.add(MessagePong(nonce: message.nonce).toBytes(network));
             } else if (message is MessagePong) {
               _log.info(
-                'Received pong message from peer: ${peer.ip}:${peer.port}, Nonce: ${message.nonce}',
+                '<<<<<: ${peer.ip}:${peer.port}, Pong: ${message.nonce}',
               );
             } else if (message is MessageInv) {
               _log.info(
-                'Received inv message from peer: ${peer.ip}:${peer.port}, Inventory: ${message.inventory}',
+                '<<<<<: ${peer.ip}:${peer.port}, Inv: ${message.inventory.length}',
               );
+              for (final inv in message.inventory) {
+                _log.info(
+                  '       Inventory: Type: ${inv.type.name}, Hash: ${inv.hash.toHex()}',
+                );
+              }
             } else if (message is MessageUnknown) {
               _log.info(
-                'Received unknown message from peer: ${peer.ip}:${peer.port}, Command: ${message.command} (${message.command.length})',
+                '<<<<<: ${peer.ip}:${peer.port}, Unknown: ${message.command}',
               );
             }
           } catch (e) {
