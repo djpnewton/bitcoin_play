@@ -89,14 +89,7 @@ class TxOut {
 
   Uint8List toBytes() {
     final buffer = BytesBuilder();
-    // cant use setUint64 as it is not available in dart2js
-    final valueUpper = (value >> 32) & 0xffffffff;
-    final valueLower = value & 0xffffffff;
-    buffer.add(
-      Uint8List(8)
-        ..buffer.asByteData().setUint32(0, valueLower, Endian.little)
-        ..buffer.asByteData().setUint32(4, valueUpper, Endian.little),
-    );
+    buffer.add(setUint64JsSafe(value, endian: Endian.little));
     final scriptPubKeySize = compactSize(scriptPubKey.length);
     buffer.add(scriptPubKeySize);
     buffer.add(scriptPubKey);
@@ -108,11 +101,10 @@ class TxOut {
       throw FormatException('TxOut bytes must be at least 10 bytes long');
     }
     var i = 0;
-    final buffer = ByteData.sublistView(bytes);
-    // cant use getUint64 as it is not available in dart2js
-    final valueUpper = buffer.getUint32(i + 4, Endian.little);
-    final valueLower = buffer.getUint32(i, Endian.little);
-    final value = valueUpper << 32 | valueLower;
+    final value = getUint64JsSafe(
+      bytes.sublist(i, i + 8),
+      endian: Endian.little,
+    );
     i += 8;
     final cspr = compactSizeParse(bytes.sublist(i));
     final scriptPubKeySize = cspr.value;

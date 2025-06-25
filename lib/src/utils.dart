@@ -188,3 +188,32 @@ CompactSizeParseResult compactSizeParse(Uint8List buffer) {
     throw FormatException('Invalid first byte for compact size: $firstByte');
   }
 }
+
+/// dart2js does not support setUint64
+Uint8List setUint64JsSafe(int value, {Endian endian = Endian.big}) {
+  final buffer = Uint8List(8);
+  final byteData = buffer.buffer.asByteData();
+  if (endian == Endian.big) {
+    byteData.setUint32(0, (value >> 32) & 0xFFFFFFFF, Endian.big);
+    byteData.setUint32(4, value & 0xFFFFFFFF, Endian.big);
+  } else {
+    byteData.setUint32(4, (value >> 32) & 0xFFFFFFFF, Endian.little);
+    byteData.setUint32(0, value & 0xFFFFFFFF, Endian.little);
+  }
+  return buffer;
+}
+
+/// dart2js does not support getUint64
+int getUint64JsSafe(Uint8List bytes, {Endian endian = Endian.big}) {
+  if (bytes.length < 8) {
+    throw ArgumentError('Bytes must be at least 8 bytes long');
+  }
+  final byteData = bytes.buffer.asByteData();
+  if (endian == Endian.big) {
+    return (byteData.getUint32(0, Endian.big) << 32) |
+        byteData.getUint32(4, Endian.big);
+  } else {
+    return (byteData.getUint32(4, Endian.little) << 32) |
+        byteData.getUint32(0, Endian.little);
+  }
+}

@@ -1,0 +1,166 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:logging/logging.dart';
+
+import 'utils.dart';
+import 'p2p_messages.dart';
+import 'common.dart';
+
+final _log = Logger('Node');
+
+Uint8List _ipv4ToIpv6(String ipv4) {
+  final parts = ipv4.split('.');
+  if (parts.length != 4) {
+    throw FormatException('Invalid IPv4 address');
+  }
+  return Uint8List.fromList(
+    '00000000000000000000ffff'.toBytes() +
+        [
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+          int.parse(parts[2]),
+          int.parse(parts[3]),
+        ],
+  );
+}
+
+class Peer {
+  String ip;
+  int port;
+
+  Peer({required this.ip, required this.port});
+}
+
+class Node {
+  Map<Peer, Socket> connections = {};
+  String userAgent = '/dartcoin:0.1/';
+  Network network;
+
+  Node({required this.network});
+
+  static int defaultPort(Network network) {
+    return Network.mainnet == Network.mainnet ? 8333 : 18333;
+  }
+
+  static Future<String> ipFromDnsSeed() async {
+    final seeds = [
+      'seed.bitcoin.sipa.be',
+      'dnsseed.bluematt.me',
+      'dnsseed.bitcoin.dashjr.org',
+      'seed.bitcoin.sprovoost.nl',
+      'seed.bitcoinstats.com',
+      'seed.bitnodes.io',
+    ];
+    final randomSeed =
+        seeds[DateTime.now().millisecondsSinceEpoch % seeds.length];
+    _log.info('Using DNS seed: $randomSeed');
+    try {
+      final addresses = await InternetAddress.lookup(
+        randomSeed,
+        type: InternetAddressType.IPv4,
+      );
+      if (addresses.isNotEmpty && addresses[0].rawAddress.isNotEmpty) {
+        _log.info('Found ${addresses.length} addresses for seed $randomSeed');
+        final randomAddress =
+            addresses[DateTime.now().millisecondsSinceEpoch % addresses.length];
+        _log.info('Random address: ${randomAddress.address}');
+        return randomAddress.address;
+      }
+    } catch (e) {
+      _log.severe('Error occurred while looking up DNS seed: $e');
+      rethrow;
+    }
+    throw Exception('No valid IP address found for DNS seed: $randomSeed');
+  }
+
+  void connectPeer(Peer peer) async {
+    final localPort = defaultPort(network);
+    final localIp = '127.0.0.1';
+
+    // connect to the peer
+    _log.info('Connecting to peer: ${peer.ip}:${peer.port}');
+    try {
+      final socket = await Socket.connect(peer.ip, peer.port);
+      connections[peer] = socket;
+      _log.info('Connected to peer: ${peer.ip}:${peer.port}');
+      _log.info('Sending version message to peer: ${peer.ip}:${peer.port}');
+      final versionBytes = MessageVersion(
+        timestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        remoteAddress: _ipv4ToIpv6(peer.ip),
+        remotePort: peer.port,
+        localAddress: _ipv4ToIpv6(localIp),
+        localPort: localPort,
+        nonce: 0,
+        userAgent: userAgent,
+        lastBlock: 0,
+        relay: false,
+      ).toBytes(network);
+      _log.info('Version message bytes: ${versionBytes.toHex().toUpperCase()}');
+      socket.write(versionBytes);
+      socket.listen(
+        (data) {
+          // Handle incoming data
+          _log.info(
+            'Received data from peer: ${peer.ip}:${peer.port}, Data: ${data.toHex().toUpperCase()}',
+          );
+          // check what message type is received
+          try {
+            final message = Message.fromBytes(data, network);
+            if (message is MessageVersion) {
+              _log.info(
+                'Received version message from peer: ${peer.ip}:${peer.port}, Version: ${message.version}',
+              );
+              _log.info(
+                'sending versionack message to peer: ${peer.ip}:${peer.port}',
+              );
+              socket.write(MessageVerack().toBytes(network));
+            } else if (message is MessageVerack) {
+              _log.info(
+                'Received versionack message from peer: ${peer.ip}:${peer.port}',
+              );
+            } else if (message is MessagePing) {
+              _log.info(
+                'Received ping message from peer: ${peer.ip}:${peer.port}, Nonce: ${message.nonce}',
+              );
+              _log.info(
+                'sending pong message to peer: ${peer.ip}:${peer.port}',
+              );
+              socket.write(MessagePong(nonce: message.nonce).toBytes(network));
+            } else if (message is MessagePong) {
+              _log.info(
+                'Received pong message from peer: ${peer.ip}:${peer.port}, Nonce: ${message.nonce}',
+              );
+            } else if (message is MessageInv) {
+              _log.info(
+                'Received inv message from peer: ${peer.ip}:${peer.port}, Inventory: ${message.inventory}',
+              );
+            } else if (message is MessageUnknown) {
+              _log.info(
+                'Received unknown message from peer: ${peer.ip}:${peer.port}, Command: ${message.command}',
+              );
+            }
+          } catch (e) {
+            _log.severe(
+              'Error parsing message from peer: ${peer.ip}:${peer.port}, Error: $e',
+            );
+          }
+        },
+        onDone: () {
+          // Handle socket closure
+          connections.remove(peer);
+          _log.info('Disconnected from peer: ${peer.ip}:${peer.port}');
+        },
+        onError: (error) {
+          _log.severe(
+            'Error occurred while communicating with peer: ${peer.ip}:${peer.port}, Error: $error',
+          );
+        },
+      );
+    } catch (error) {
+      _log.severe(
+        'Failed to connect to peer: ${peer.ip}:${peer.port}, Error: $error',
+      );
+    }
+  }
+}
