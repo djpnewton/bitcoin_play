@@ -49,23 +49,26 @@ class Message {
     )) {
       throw FormatException('Invalid magic number ${magic.toHex()}');
     }
-    final command = utf8.decode(bytes.sublist(4, 16)).trimRight();
-    final cspr = compactSizeParse(bytes.sublist(16));
-    var offset = cspr.bytesRead + 16;
+    final command = utf8.decode(bytes.sublist(4, 16)).split('\x00')[0];
+    final payloadSize = bytes.buffer.asByteData().getUint32(16, Endian.little);
+    var offset = 20;
     if (offset + 4 > bytes.length) {
-      throw FormatException('Size field exceeds remaining bytes');
+      throw FormatException('Checksum field exceeds remaining bytes');
     }
     final checksum = bytes.sublist(offset, offset + 4);
     offset += 4;
-    if (offset + 4 > bytes.length) {
+    if (offset + payloadSize > bytes.length) {
       throw FormatException('Payload field exceeds remaining bytes');
     }
-    final payload = bytes.sublist(offset);
+    final payload = bytes.sublist(offset, offset + payloadSize);
 
     // check checksum
     final expectedChecksum = _checksum(payload);
     if (!listEquals(expectedChecksum, checksum)) {
-      throw FormatException('Invalid checksum');
+      throw FormatException(
+        'Invalid checksum got ${checksum.toHex()}, '
+        'expected ${expectedChecksum.toHex()}',
+      );
     }
 
     switch (command) {
@@ -150,7 +153,7 @@ class MessageVersion extends Message {
     // remote port
     payload.add(
       Uint8List(2)
-        ..buffer.asByteData().setUint16(0, remotePort ?? 0, Endian.little),
+        ..buffer.asByteData().setUint16(0, remotePort ?? 0, Endian.big),
     );
     // local service flags
     payload.add(setUint64JsSafe(localServiceFlags ?? 0, endian: Endian.little));
@@ -162,7 +165,7 @@ class MessageVersion extends Message {
     // local port
     payload.add(
       Uint8List(2)
-        ..buffer.asByteData().setUint16(0, localPort ?? 0, Endian.little),
+        ..buffer.asByteData().setUint16(0, localPort ?? 0, Endian.big),
     );
     // nonce
     payload.add(setUint64JsSafe(nonce ?? 0, endian: Endian.little));
@@ -228,7 +231,7 @@ class MessageVersion extends Message {
     if (offset + 2 > bytes.length) {
       throw FormatException('Remote port field exceeds remaining bytes');
     }
-    final remotePort = buffer.getUint16(offset, Endian.little);
+    final remotePort = buffer.getUint16(offset, Endian.big);
     offset += 2;
 
     if (offset + 8 > bytes.length) {
@@ -249,7 +252,7 @@ class MessageVersion extends Message {
     if (offset + 2 > bytes.length) {
       throw FormatException('Local port field exceeds remaining bytes');
     }
-    final localPort = buffer.getUint16(offset, Endian.little);
+    final localPort = buffer.getUint16(offset, Endian.big);
     offset += 2;
 
     if (offset + 8 > bytes.length) {

@@ -96,25 +96,25 @@ class Node {
         lastBlock: 0,
         relay: false,
       ).toBytes(network);
-      _log.info('Version message bytes: ${versionBytes.toHex().toUpperCase()}');
-      socket.write(versionBytes);
+      _log.info('Version message bytes: ${versionBytes.toHex()}');
+      socket.add(versionBytes);
       socket.listen(
         (data) {
           // Handle incoming data
           _log.info(
-            'Received data from peer: ${peer.ip}:${peer.port}, Data: ${data.toHex().toUpperCase()}',
+            'Received data from peer: ${peer.ip}:${peer.port}, Data: ${data.toHex()}',
           );
           // check what message type is received
           try {
             final message = Message.fromBytes(data, network);
             if (message is MessageVersion) {
               _log.info(
-                'Received version message from peer: ${peer.ip}:${peer.port}, Version: ${message.version}',
+                'Received version message from peer: ${peer.ip}:${peer.port}, Version: ${message.version}, User Agent: ${message.userAgent}, Last Block: ${message.lastBlock}',
               );
               _log.info(
                 'sending versionack message to peer: ${peer.ip}:${peer.port}',
               );
-              socket.write(MessageVerack().toBytes(network));
+              socket.add(MessageVerack().toBytes(network));
             } else if (message is MessageVerack) {
               _log.info(
                 'Received versionack message from peer: ${peer.ip}:${peer.port}',
@@ -126,7 +126,7 @@ class Node {
               _log.info(
                 'sending pong message to peer: ${peer.ip}:${peer.port}',
               );
-              socket.write(MessagePong(nonce: message.nonce).toBytes(network));
+              socket.add(MessagePong(nonce: message.nonce).toBytes(network));
             } else if (message is MessagePong) {
               _log.info(
                 'Received pong message from peer: ${peer.ip}:${peer.port}, Nonce: ${message.nonce}',
@@ -137,7 +137,7 @@ class Node {
               );
             } else if (message is MessageUnknown) {
               _log.info(
-                'Received unknown message from peer: ${peer.ip}:${peer.port}, Command: ${message.command}',
+                'Received unknown message from peer: ${peer.ip}:${peer.port}, Command: ${message.command} (${message.command.length})',
               );
             }
           } catch (e) {

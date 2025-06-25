@@ -361,6 +361,7 @@ class TestP2pCommand extends Command<void> {
       'testnet' => Network.testnet,
       _ => throw ArgumentError('Invalid network type.'),
     };
+    _log.info('Network: ${network.name}');
     final peerRaw = argResults?.option('peer');
     if (peerRaw == null) {
       _log.info('Using dns seed to find peer.');
