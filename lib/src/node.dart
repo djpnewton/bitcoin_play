@@ -74,6 +74,56 @@ class Node {
     throw Exception('No valid IP address found for DNS seed: $randomSeed');
   }
 
+  void logMessage(Peer peer, Message message) {
+    if (message is MessageVersion) {
+      _log.info(
+        '<<<<<: ${peer.ip}:${peer.port}, Version: ${message.version}, User Agent: ${message.userAgent}, Last Block: ${message.lastBlock}',
+      );
+    } else if (message is MessageVerack) {
+      _log.info('<<<<<: ${peer.ip}:${peer.port}, Verack');
+    } else if (message is MessagePing) {
+      _log.info('<<<<<: ${peer.ip}:${peer.port}, Ping: ${message.nonce}');
+    } else if (message is MessagePong) {
+      _log.info('<<<<<: ${peer.ip}:${peer.port}, Pong: ${message.nonce}');
+    } else if (message is MessageInv) {
+      _log.info(
+        '<<<<<: ${peer.ip}:${peer.port}, Inv: ${message.inventory.length}',
+      );
+      for (final inv in message.inventory) {
+        _log.info(
+          '       Inventory: Type: ${inv.type.name}, Hash: ${inv.hash.toHex()}',
+        );
+      }
+    } else if (message is MessageUnknown) {
+      _log.info('<<<<<: ${peer.ip}:${peer.port}, Unknown: ${message.command}');
+    }
+
+    _log.info(
+      '       Command:  ${message.command}\n'
+      '                                         Size:     ${message.payload.length} bytes\n'
+      '                                         Checksum: ${Message.checksum(message.payload).toHex()}\n'
+      '                                         Payload:  ${message.payload.toHex()}',
+    );
+  }
+
+  void replyMessage(Peer peer, Message message, Socket socket) {
+    if (message is MessageVersion) {
+    } else if (message is MessageVerack) {
+      _log.info('>>>>>: ${peer.ip}:${peer.port}, Verack');
+      socket.add(MessageVerack().toBytes(network));
+    } else if (message is MessagePing) {
+      _log.info('>>>>>: ${peer.ip}:${peer.port}, Pong');
+      socket.add(
+        MessagePong(
+          nonce: message.nonce,
+          payload: Uint8List(0),
+        ).toBytes(network),
+      );
+    } else if (message is MessagePong) {
+    } else if (message is MessageInv) {
+    } else if (message is MessageUnknown) {}
+  }
+
   void connectPeer(Peer peer) async {
     final localPort = defaultPort(network);
     final localIp = '127.0.0.1';
@@ -94,6 +144,9 @@ class Node {
         userAgent: userAgent,
         lastBlock: 0,
         relay: false,
+        payload: Uint8List(
+          0,
+        ), // TODO: not nice to need to put this dummy value here
       ).toBytes(network);
       _log.info('>>>>>: ${peer.ip}:${peer.port}, Version');
       socket.add(versionBytes);
@@ -103,38 +156,13 @@ class Node {
           //_log.info('<<<<<: ${peer.ip}:${peer.port}, Data: ${data.toHex()}');
           // check what message type is received
           try {
-            final message = Message.fromBytes(data, network);
-            if (message is MessageVersion) {
-              _log.info(
-                '<<<<<: ${peer.ip}:${peer.port}, Version: ${message.version}, User Agent: ${message.userAgent}, Last Block: ${message.lastBlock}',
-              );
-              _log.info('>>>>>: ${peer.ip}:${peer.port}, Verack');
-              socket.add(MessageVerack().toBytes(network));
-            } else if (message is MessageVerack) {
-              _log.info('<<<<<: ${peer.ip}:${peer.port}, Verack');
-            } else if (message is MessagePing) {
-              _log.info(
-                '<<<<<: ${peer.ip}:${peer.port}, Ping: ${message.nonce}',
-              );
-              _log.info('>>>>>: ${peer.ip}:${peer.port}, Pong');
-              socket.add(MessagePong(nonce: message.nonce).toBytes(network));
-            } else if (message is MessagePong) {
-              _log.info(
-                '<<<<<: ${peer.ip}:${peer.port}, Pong: ${message.nonce}',
-              );
-            } else if (message is MessageInv) {
-              _log.info(
-                '<<<<<: ${peer.ip}:${peer.port}, Inv: ${message.inventory.length}',
-              );
-              for (final inv in message.inventory) {
-                _log.info(
-                  '       Inventory: Type: ${inv.type.name}, Hash: ${inv.hash.toHex()}',
-                );
-              }
-            } else if (message is MessageUnknown) {
-              _log.info(
-                '<<<<<: ${peer.ip}:${peer.port}, Unknown: ${message.command}',
-              );
+            var offset = 0;
+            while (offset < data.length) {
+              final message = Message.fromBytes(data.sublist(offset), network);
+              logMessage(peer, message);
+              replyMessage(peer, message, socket);
+              // get size of message
+              offset += Message.messageHeaderSize + message.payload.length;
             }
           } catch (e) {
             _log.severe(
@@ -146,6 +174,7 @@ class Node {
           // Handle socket closure
           connections.remove(peer);
           _log.info('Disconnected from peer: ${peer.ip}:${peer.port}');
+          socket.destroy();
         },
         onError: (error) {
           _log.severe(

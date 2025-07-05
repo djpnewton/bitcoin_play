@@ -7,12 +7,13 @@ import 'utils.dart';
 class Message {
   static const magicMainnet = [0xf9, 0xbe, 0xb4, 0xd9];
   static const magicTestnet = [0x0b, 0x11, 0x09, 0x07];
+  static const messageHeaderSize = 24;
   String command;
   Uint8List payload;
 
   Message({required this.command, required this.payload});
 
-  static Uint8List _checksum(Uint8List data) {
+  static Uint8List checksum(Uint8List data) {
     return hash256(data).sublist(0, 4);
   }
 
@@ -33,14 +34,16 @@ class Message {
       Uint8List(4)
         ..buffer.asByteData().setUint32(0, payload.length, Endian.little),
     );
-    buffer.add(_checksum(payload));
+    buffer.add(checksum(payload));
     buffer.add(payload);
     return buffer.toBytes();
   }
 
   factory Message.fromBytes(Uint8List bytes, Network network) {
-    if (bytes.length < 21) {
-      throw FormatException('Message bytes must be at least 21 bytes long');
+    if (bytes.length < messageHeaderSize) {
+      throw FormatException(
+        'Message bytes must be at least $messageHeaderSize bytes long',
+      );
     }
     final magic = bytes.sublist(0, 4);
     if (!listEquals(
@@ -51,22 +54,20 @@ class Message {
     }
     final command = utf8.decode(bytes.sublist(4, 16)).split('\x00')[0];
     final payloadSize = bytes.buffer.asByteData().getUint32(16, Endian.little);
-    var offset = 20;
-    if (offset + 4 > bytes.length) {
+    if (24 > bytes.length) {
       throw FormatException('Checksum field exceeds remaining bytes');
     }
-    final checksum = bytes.sublist(offset, offset + 4);
-    offset += 4;
-    if (offset + payloadSize > bytes.length) {
+    final chksum = bytes.sublist(20, 24);
+    if (24 + payloadSize > bytes.length) {
       throw FormatException('Payload field exceeds remaining bytes');
     }
-    final payload = bytes.sublist(offset, offset + payloadSize);
+    final payload = bytes.sublist(24, 24 + payloadSize);
 
     // check checksum
-    final expectedChecksum = _checksum(payload);
-    if (!listEquals(expectedChecksum, checksum)) {
+    final expectedChecksum = checksum(payload);
+    if (!listEquals(expectedChecksum, chksum)) {
       throw FormatException(
-        'Invalid checksum got ${checksum.toHex()}, '
+        'Invalid checksum got ${chksum.toHex()}, '
         'expected ${expectedChecksum.toHex()}',
       );
     }
@@ -118,10 +119,8 @@ class MessageVersion extends Message {
     required this.userAgent,
     required this.lastBlock,
     required this.relay,
-  }) : super(
-         command: 'version',
-         payload: Uint8List(0), // Placeholder, will be filled later
-       ) {
+    required super.payload,
+  }) : super(command: 'version') {
     if (remoteAddress != null && remoteAddress!.length != 16) {
       throw ArgumentError('Remote address must be 16 bytes (IPv6)');
     }
@@ -265,7 +264,7 @@ class MessageVersion extends Message {
     offset += userAgentSize.bytesRead;
     final userAgentBytes = bytes.sublist(offset, offset + userAgentSize.value);
     final userAgent = utf8.decode(userAgentBytes);
-    offset += userAgentSize.bytesRead;
+    offset += userAgentSize.value;
 
     if (offset + 4 > bytes.length) {
       throw FormatException('Last block field exceeds remaining bytes');
@@ -292,6 +291,7 @@ class MessageVersion extends Message {
       userAgent: userAgent,
       lastBlock: lastBlock,
       relay: relayFlag,
+      payload: bytes,
     );
   }
 }
@@ -307,8 +307,8 @@ class MessageUnknown extends Message {
 class MessagePing extends Message {
   int nonce;
 
-  MessagePing({required this.nonce})
-    : super(command: 'ping', payload: Uint8List(0));
+  MessagePing({required this.nonce, required super.payload})
+    : super(command: 'ping');
 
   @override
   Uint8List toBytes(Network network) {
@@ -323,15 +323,15 @@ class MessagePing extends Message {
       throw FormatException('Ping message bytes must be exactly 8 bytes long');
     }
     final nonce = getUint64JsSafe(bytes, endian: Endian.little);
-    return MessagePing(nonce: nonce);
+    return MessagePing(nonce: nonce, payload: bytes);
   }
 }
 
 class MessagePong extends Message {
   int nonce;
 
-  MessagePong({required this.nonce})
-    : super(command: 'pong', payload: Uint8List(0));
+  MessagePong({required this.nonce, required super.payload})
+    : super(command: 'pong');
 
   @override
   Uint8List toBytes(Network network) {
@@ -346,7 +346,7 @@ class MessagePong extends Message {
       throw FormatException('Pong message bytes must be exactly 8 bytes long');
     }
     final nonce = getUint64JsSafe(bytes, endian: Endian.little);
-    return MessagePong(nonce: nonce);
+    return MessagePong(nonce: nonce, payload: bytes);
   }
 }
 
@@ -390,8 +390,8 @@ class InventoryItem {
 class MessageInv extends Message {
   List<InventoryItem> inventory;
 
-  MessageInv({required this.inventory})
-    : super(command: 'inv', payload: Uint8List(0)) {
+  MessageInv({required this.inventory, required super.payload})
+    : super(command: 'inv') {
     if (inventory.isEmpty) {
       throw ArgumentError('Inventory cannot be empty');
     }
@@ -425,6 +425,6 @@ class MessageInv extends Message {
     if (inventory.isEmpty) {
       throw FormatException('Inventory cannot be empty');
     }
-    return MessageInv(inventory: inventory);
+    return MessageInv(inventory: inventory, payload: bytes);
   }
 }
