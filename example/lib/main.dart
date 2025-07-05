@@ -1,12 +1,21 @@
-// ignore_for_file: avoid_print
-
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:logging/logging.dart';
 
 import 'package:dartcoin/dartcoin.dart';
+
+final _log = Logger('main');
+
+void initLogger() {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    // ignore: avoid_print
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+}
 
 class ExampleCommand extends Command<void> {
   @override
@@ -20,83 +29,85 @@ class ExampleCommand extends Command<void> {
   void run() {
     final mnemonic =
         'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-    print('Mnemonic words: $mnemonic');
+    _log.info('Mnemonic words: $mnemonic');
 
-    print('Validating mnemonic: ${mnemonicValid(mnemonic)}');
+    _log.info('Validating mnemonic: ${mnemonicValid(mnemonic)}');
 
     final seed = mnemonicToSeed(mnemonic);
-    print('Seed (hex): $seed');
+    _log.info('Seed (hex): $seed');
 
     final masterKey = PrivateKey.fromSeed(hexToBytes(seed));
-    print('Master Extended Key:');
-    print('  Private Key: ${bytesToHex(masterKey.privateKey)}');
-    print('  Public Key:  ${bytesToHex(masterKey.publicKey)}');
-    print('  Chain Code:  ${bytesToHex(masterKey.chainCode)}');
+    _log.info('Master Extended Key:');
+    _log.info('  Private Key: ${bytesToHex(masterKey.privateKey)}');
+    _log.info('  Public Key:  ${bytesToHex(masterKey.publicKey)}');
+    _log.info('  Chain Code:  ${bytesToHex(masterKey.chainCode)}');
 
     final childKey = masterKey.childPrivateKey(0x80000000, hardened: true);
-    print('Child Extended Key m/0\':');
-    print('  Private Key:  ${bytesToHex(childKey.privateKey)}');
-    print('  Public Key:   ${bytesToHex(childKey.publicKey)}');
-    print('  Chain Code:   ${bytesToHex(childKey.chainCode)}');
-    print('  Depth:        ${intToHex(childKey.depth)}');
-    print('  Parent Fingerprint: ${intToHex(childKey.parentFingerprint)}');
-    print('  Child Number: ${intToHex(childKey.childNumber)}');
+    _log.info('Child Extended Key m/0\':');
+    _log.info('  Private Key:  ${bytesToHex(childKey.privateKey)}');
+    _log.info('  Public Key:   ${bytesToHex(childKey.publicKey)}');
+    _log.info('  Chain Code:   ${bytesToHex(childKey.chainCode)}');
+    _log.info('  Depth:        ${intToHex(childKey.depth)}');
+    _log.info('  Parent Fingerprint: ${intToHex(childKey.parentFingerprint)}');
+    _log.info('  Child Number: ${intToHex(childKey.childNumber)}');
     final xprv = childKey.xprv();
-    print('  xprv: $xprv');
+    _log.info('  xprv: $xprv');
     final childKeyParsed = PrivateKey.fromXPrv(xprv);
-    print('Parsed Child Extended Key:');
-    print('  Private Key:  ${bytesToHex(childKeyParsed.privateKey)}');
-    print('  Public Key:   ${bytesToHex(childKeyParsed.publicKey)}');
-    print('  Chain Code:   ${bytesToHex(childKeyParsed.chainCode)}');
-    print('  Depth:        ${intToHex(childKeyParsed.depth)}');
-    print(
+    _log.info('Parsed Child Extended Key:');
+    _log.info('  Private Key:  ${bytesToHex(childKeyParsed.privateKey)}');
+    _log.info('  Public Key:   ${bytesToHex(childKeyParsed.publicKey)}');
+    _log.info('  Chain Code:   ${bytesToHex(childKeyParsed.chainCode)}');
+    _log.info('  Depth:        ${intToHex(childKeyParsed.depth)}');
+    _log.info(
       '  Parent Fingerprint: ${intToHex(childKeyParsed.parentFingerprint)}',
     );
-    print('  Child Number: ${intToHex(childKeyParsed.childNumber)}');
+    _log.info('  Child Number: ${intToHex(childKeyParsed.childNumber)}');
 
     final childPubKey = masterKey.childPublicKey(1);
-    print('Child Public Key m/1:');
-    print('  Public Key:   ${bytesToHex(childPubKey.publicKey)}');
-    print('  Chain Code:   ${bytesToHex(childPubKey.chainCode)}');
-    print('  Depth:        ${intToHex(childPubKey.depth)}');
-    print('  Parent Fingerprint: ${intToHex(childPubKey.parentFingerprint)}');
-    print('  Child Number: ${intToHex(childPubKey.childNumber)}');
+    _log.info('Child Public Key m/1:');
+    _log.info('  Public Key:   ${bytesToHex(childPubKey.publicKey)}');
+    _log.info('  Chain Code:   ${bytesToHex(childPubKey.chainCode)}');
+    _log.info('  Depth:        ${intToHex(childPubKey.depth)}');
+    _log.info(
+      '  Parent Fingerprint: ${intToHex(childPubKey.parentFingerprint)}',
+    );
+    _log.info('  Child Number: ${intToHex(childPubKey.childNumber)}');
     final xpub = childPubKey.xpub();
-    print('  xpub: $xpub');
+    _log.info('  xpub: $xpub');
     final childPubKeyParsed = PublicKey.fromXPub(xpub);
-    print('Parsed Child Public Key:');
-    print('  Public Key:   ${bytesToHex(childPubKeyParsed.publicKey)}');
-    print('  Chain Code:   ${bytesToHex(childPubKeyParsed.chainCode)}');
-    print('  Depth:        ${intToHex(childPubKeyParsed.depth)}');
-    print(
+    _log.info('Parsed Child Public Key:');
+    _log.info('  Public Key:   ${bytesToHex(childPubKeyParsed.publicKey)}');
+    _log.info('  Chain Code:   ${bytesToHex(childPubKeyParsed.chainCode)}');
+    _log.info('  Depth:        ${intToHex(childPubKeyParsed.depth)}');
+    _log.info(
       '  Parent Fingerprint: ${intToHex(childPubKeyParsed.parentFingerprint)}',
     );
-    print('  Child Number: ${intToHex(childPubKeyParsed.childNumber)}');
+    _log.info('  Child Number: ${intToHex(childPubKeyParsed.childNumber)}');
 
     var address = childPubKey.address(network: Network.mainnet);
-    print('P2PKH Address (m/1): $address');
+    _log.info('P2PKH Address (m/1): $address');
     address = childPubKey.address(network: Network.testnet);
-    print('P2PKH Address (m/1) Testnet: $address');
+    _log.info('P2PKH Address (m/1) Testnet: $address');
     address = childPubKey.address(
       network: Network.mainnet,
       scriptType: ScriptType.p2shP2wpkh,
     );
-    print('P2SH-P2WPKH Address (m/1): $address');
+    _log.info('P2SH-P2WPKH Address (m/1): $address');
     address = childPubKey.address(
       network: Network.testnet,
       scriptType: ScriptType.p2shP2wpkh,
     );
-    print('P2SH-P2WPKH Address (m/1) Testnet: $address');
+    _log.info('P2SH-P2WPKH Address (m/1) Testnet: $address');
     address = childPubKey.address(
       network: Network.mainnet,
       scriptType: ScriptType.p2wpkh,
     );
-    print('P2WPKH Address (m/1): $address');
+    _log.info('P2WPKH Address (m/1): $address');
     address = childPubKey.address(
       network: Network.testnet,
       scriptType: ScriptType.p2wpkh,
     );
-    print('P2WPKH Address (m/1) Testnet: $address');
+    _log.info('P2WPKH Address (m/1) Testnet: $address');
   }
 }
 
@@ -164,7 +175,7 @@ class SignCommand extends Command<void> {
     final message = argResults?.option('message');
     if (pkRaw == null || message == null) {
       // should not happen due to mandatory options, but just in case
-      print('Please provide both a private key and a message to sign.');
+      _log.info('Please provide both a private key and a message to sign.');
       return;
     }
     // load private key from hex, WIF, or xpriv
@@ -180,7 +191,7 @@ class SignCommand extends Command<void> {
         try {
           pk = PrivateKey.fromXPrv(pkRaw);
         } catch (e) {
-          print('Invalid private key format: $pkRaw');
+          _log.info('Invalid private key format: $pkRaw');
           return;
         }
       }
@@ -190,8 +201,8 @@ class SignCommand extends Command<void> {
       // sign the message hash in DER format
       final signature = derSign(pk, utf8.encode(message));
       // print the signature in hex format
-      print('Public Key: ${bytesToHex(signature.publicKey)}');
-      print('Signature (DER): ${bytesToHex(signature.signature)}');
+      _log.info('Public Key: ${bytesToHex(signature.publicKey)}');
+      _log.info('Signature (DER): ${bytesToHex(signature.signature)}');
     } else if (type == 'bitcoin-signmessage') {
       // get the network and script type
       final network = switch (argResults?.option('network')) {
@@ -213,8 +224,8 @@ class SignCommand extends Command<void> {
         scriptType,
       );
       // print the signature
-      print('Address: ${signature.address}');
-      print('Signature: ${signature.signature}');
+      _log.info('Address: ${signature.address}');
+      _log.info('Signature: ${signature.signature}');
     }
   }
 }
@@ -252,7 +263,9 @@ class VerifyCommand extends Command<void> {
     final message = argResults?.option('message');
     final signature = argResults?.option('signature');
     if (pubKeyRaw == null || message == null || signature == null) {
-      print('Please provide a public key, message, and signature to verify.');
+      _log.info(
+        'Please provide a public key, message, and signature to verify.',
+      );
       return;
     }
     try {
@@ -261,7 +274,7 @@ class VerifyCommand extends Command<void> {
       final pk = PublicKey.fromPublicKey(pubKeyBytes);
       // verify the signature
       final result = derVerify(pk, utf8.encode(message), hexToBytes(signature));
-      print('Signature valid: $result');
+      _log.info('Signature valid: $result');
     } catch (e) {
       // if not a valid public key, try to parse it as a Bitcoin address
       try {
@@ -270,9 +283,9 @@ class VerifyCommand extends Command<void> {
           utf8.encode(message),
           signature,
         );
-        print('Signature valid: $result');
+        _log.info('Signature valid: $result');
       } catch (e) {
-        print('Invalid public key or Bitcoin address: $pubKeyRaw');
+        _log.info('Invalid public key or Bitcoin address: $pubKeyRaw');
         return;
       }
     }
@@ -297,17 +310,78 @@ class PrivateKeyCommand extends Command<void> {
   void run() {
     final pkRaw = argResults?.option('private-key');
     if (pkRaw == null) {
-      print('Please provide a private key in hex format.');
+      _log.info('Please provide a private key in hex format.');
       return;
     }
     try {
       final pkBytes = hexToBytes(pkRaw);
       final pk = PrivateKey.fromPrivateKey(pkBytes);
       final wif = Wif(Network.mainnet, pk.privateKey, true);
-      print('WIF: ${wif.toWifString()}');
+      _log.info('WIF: ${wif.toWifString()}');
     } catch (e) {
-      print('Invalid private key format: $pkRaw');
+      _log.info('Invalid private key format: $pkRaw');
     }
+  }
+}
+
+class TestP2pCommand extends Command<void> {
+  @override
+  final name = 'test-p2p';
+  @override
+  final description = 'Test P2P functionality.';
+
+  TestP2pCommand() {
+    argParser.addOption(
+      'peer',
+      abbr: 'p',
+      help:
+          'The peer to connect to in the format <ip>:<port>. If ommitted, a dns seed will be used.',
+    );
+    argParser.addOption(
+      'network',
+      abbr: 'n',
+      help: 'The Bitcoin network to use.',
+      allowed: ['mainnet', 'testnet'],
+      defaultsTo: 'mainnet',
+      allowedHelp: {
+        'mainnet': 'Use the main Bitcoin network.',
+        'testnet': 'Use the Bitcoin test network.',
+      },
+    );
+  }
+
+  @override
+  void run() async {
+    initLogger();
+
+    String? ip;
+    int? port;
+    final network = switch (argResults?.option('network')) {
+      'mainnet' => Network.mainnet,
+      'testnet' => Network.testnet,
+      _ => throw ArgumentError('Invalid network type.'),
+    };
+    _log.info('Network: ${network.name}');
+    final peerRaw = argResults?.option('peer');
+    if (peerRaw == null) {
+      _log.info('Using dns seed to find peer.');
+      ip = await Node.ipFromDnsSeed();
+      port = Node.defaultPort(network);
+    } else {
+      final parts = peerRaw.split(':');
+      if (parts.length != 2) {
+        _log.info('Invalid peer format. Use <ip>:<port>.');
+        return;
+      }
+      ip = parts[0];
+      port = int.tryParse(parts[1]);
+      if (port == null || port <= 0 || port > 65535) {
+        _log.info('Invalid port number: $parts[1]');
+        return;
+      }
+    }
+    final node = Node(network: network);
+    node.connectPeer(Peer(ip: ip, port: port));
   }
 }
 
@@ -320,11 +394,12 @@ void main(List<String> args) {
         ..addCommand(ExampleCommand())
         ..addCommand(SignCommand())
         ..addCommand(VerifyCommand())
-        ..addCommand(PrivateKeyCommand());
+        ..addCommand(PrivateKeyCommand())
+        ..addCommand(TestP2pCommand());
   // ignore: inference_failure_on_untyped_parameter
   runner.run(args).catchError((error) {
-    if (error is! UsageException) print('Error: $error\n------\n');
-    print(runner.usage);
+    if (error is! UsageException) _log.info('Error: $error\n------\n');
+    _log.info(runner.usage);
     exit(64); // Exit code 64 indicates a usage error.
   });
 }
